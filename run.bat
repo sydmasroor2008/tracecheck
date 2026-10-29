@@ -11,4 +11,8 @@ if not exist .venv (
   call .venv\Scripts\activate.bat
 )
 python check_env.py || exit /b 1
+if not exist data\clean\cached_fields.json (
+  echo Building the synthetic demo data...
+  python tools\make_factory.py || exit /b 1
+)
 streamlit run app.py

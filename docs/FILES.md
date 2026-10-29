@@ -67,3 +67,7 @@
 **app.py** — The Streamlit app with six pages and a demo-folder selector (clean, problem, trader). Dashboard counts; Documents and review shows each document with its fields, mode and confidence, and lets a reviewer approve or correct values; Trace map shows the lot-by-lot precursor status and the shipment chains; Checks lists flags and lets you accept one with a note; Calculation keeps the Commission proof table and shows the factory's illustrative result or "input missing"; Evidence pack downloads the Excel file. Every page shows the SYNTHETIC banner.
 
 **tests/test_app_smoke.py** — Imports app.py with a fake streamlit module and calls every page for every demo folder, so a broken page is caught without starting a browser.
+
+**.streamlit/config.toml** — Streamlit settings for the demo laptop: no usage statistics sent, the app only listens on localhost, and a minimal toolbar. This keeps the app fully offline.
+
+**README.md** — What TraceCheck does in five lines, how to run it, how to run the tests, how to regenerate the demo data, what is synthetic, what was not verified, and its limits.
