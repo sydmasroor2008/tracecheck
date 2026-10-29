@@ -55,3 +55,11 @@
 **tracecheck/trace.py** — Follows each export shipment back to the production months it was packed from, the heats used in those months, the supplier and the mill. It gives every steel lot a precursor status (actual data allowed, default because the report covers the wrong year, default because the mill has no emissions data, or no mill link) and a named next action. Missing links are listed with a reason.
 
 **tests/test_trace.py** — Checks the precursor statuses and consumed tonnes against expected_results.json for all three folders, the next-action wording, a hand-built NO_MILL_LINK case, and that every clean shipment traces to a mill.
+
+**tracecheck/factory_calc.py** — Works out the synthetic factory's illustrative specific embedded emissions with the calculator in calc.py. Lots with actual data allowed use the mill's verified value, and every other lot needs a default value typed by the user. Until then, or while a needed field awaits review or a fuel unit is unconfirmed, it says "input missing" and gives no number.
+
+**tracecheck/export.py** — Writes the Excel evidence pack with six sheets: issue register, precursor status, missing documents, evidence index, input sheet for the Commission's operator emissions report template, and assumptions and versions. Every sheet starts with "Draft prepared for verifier review. Illustrative. Synthetic data." Every number in the evidence index carries its source file, page, mode and reviewer.
+
+**tests/test_factory_calc.py** — Checks that the factory result says "input missing" while defaults are not entered, while a field awaits review, or while a fuel unit is wrong. With test defaults it recomputes the result independently from the data.
+
+**tests/test_export.py** — Opens the Excel file for every folder, checks the header line on every sheet, that every number in the evidence index has a source, and that the problem folder's issues and "input missing" values appear.
