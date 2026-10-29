@@ -51,3 +51,7 @@
 **tracecheck/checks.py** — The reconciliation checks. Each one takes the reviewed facility data and returns flags with an id, a severity, a plain-English message and the source documents. Missing links are called "link missing", never fraud. A flag can be accepted with a note, which is saved in data/<folder>/flag_notes.json.
 
 **tests/test_checks.py** — Runs all checks on the three demo folders and compares them with expected_results.json: clean and trader give zero flags, problem exactly the five planted ones. It also has one small hand-built case for each check.
+
+**tracecheck/trace.py** — Follows each export shipment back to the production months it was packed from, the heats used in those months, the supplier and the mill. It gives every steel lot a precursor status (actual data allowed, default because the report covers the wrong year, default because the mill has no emissions data, or no mill link) and a named next action. Missing links are listed with a reason.
+
+**tests/test_trace.py** — Checks the precursor statuses and consumed tonnes against expected_results.json for all three folders, the next-action wording, a hand-built NO_MILL_LINK case, and that every clean shipment traces to a mill.
