@@ -25,7 +25,7 @@ def factory_see(fac: dict, lot_list: list, defaults: dict = None) -> dict:
     if not product or None in product:
         missing.append("production tonnes (missing or awaiting review)")
 
-    gj, units_ok = 0.0, True
+    gj = 0.0
     sources = fac.get("_sources", {})
     for i, f in enumerate(fac.get("fuel") or []):
         if not f:
@@ -33,10 +33,8 @@ def factory_see(fac: dict, lot_list: list, defaults: dict = None) -> dict:
         name = f.get("invoice_no") or sources.get(f"fuel[{i}].quantity") or "a fuel invoice"
         if f.get("quantity") is None:
             missing.append(f"fuel quantity on {name} (missing or awaiting review)")
-            units_ok = False
         elif f.get("unit") != "GJ":
             missing.append(f"fuel quantity on {name} in GJ (stated in {f.get('unit') or 'no unit'}; confirm the unit)")
-            units_ok = False
         else:
             gj += f["quantity"]
     factors = {f.get("emission_factor_t_per_tj") for f in fac.get("fuel") or [] if f} - {None}
@@ -46,7 +44,8 @@ def factory_see(fac: dict, lot_list: list, defaults: dict = None) -> dict:
     lot_values, no_default = [], []
     for lot in lot_list:
         if lot["status"] == ACTUAL_ALLOWED:
-            value, basis = lot["verified_see"], "verified value from the mill's report"
+            value, basis = lot["verified_see"], ("value from the mill's verification report "
+                                                 "(synthetic stand-in: Commission example value)")
         else:
             value, basis = defaults.get(lot["heat"]), "default value entered by user"
         if value is None:

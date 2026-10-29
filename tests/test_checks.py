@@ -165,3 +165,9 @@ def test_accept_with_note():
     fac["scrap"]["tonnes"] = 0
     flags = checks.apply_notes(checks.run_all(fac, SMALL_CFG), {"MASS_BALANCE:1": "scrap counted late"})
     assert flags[0]["status"] == "accepted with note" and flags[0]["note"] == "scrap counted late"
+
+
+def test_fuel_unit_with_unreadable_month():
+    fac = small()
+    fac["fuel"][1].update(unit="kg", month="Aug")
+    assert checks.check_fuel_unit(fac)[0]["message"].startswith("The G2 gas invoice is in kg")

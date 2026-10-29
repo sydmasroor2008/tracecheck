@@ -137,6 +137,14 @@ def check_reporting_period(fac: dict) -> list:
     return flags
 
 
+def _month_name(f: dict) -> str:
+    """'2026-08' -> 'August'; falls back to the invoice number for anything else."""
+    try:
+        return calendar.month_name[int(str(f.get("month"))[5:7])]
+    except (ValueError, IndexError):
+        return str(f.get("invoice_no") or "one")
+
+
 def check_fuel_unit(fac: dict) -> list:
     by_fuel = {}
     for i, f in enumerate(fac.get("fuel") or []):
@@ -149,8 +157,7 @@ def check_fuel_unit(fac: dict) -> list:
             continue
         main = units.most_common(1)[0][0]
         odd = [(i, f) for i, f in rows if f["unit"] != main]
-        months = " and ".join(calendar.month_name[int(f["month"][5:7])] if f.get("month") else f["invoice_no"]
-                              for _, f in odd)
+        months = " and ".join(_month_name(f) for _, f in odd)
         unit = ", ".join(sorted({f["unit"] for _, f in odd}))
         verb = "invoice is" if len(odd) == 1 else "invoices are"
         flags.append(flag("FUEL_UNIT", "high",

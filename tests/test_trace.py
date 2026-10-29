@@ -50,3 +50,10 @@ def test_chain_names_missing_link():
     fac["shipments"][0]["production_months"] = None
     rows = trace.chains(fac, trace.lots(fac))
     assert rows[0]["Link"].startswith("missing: production months")
+
+
+def test_closing_count_awaiting_review_leaves_consumed_unknown():
+    fac = facility("clean")
+    fac["stock"]["closing"][0]["tonnes"] = None
+    b2 = next(lot for lot in trace.lots(fac) if lot["heat"] == "B2")
+    assert b2["consumed_t"] is None

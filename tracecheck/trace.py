@@ -45,7 +45,7 @@ def lots(fac: dict) -> list:
     reports = [r for r in fac.get("verification_reports") or [] if r]
     certs = {c.get("heat"): c for c in fac.get("certificates") or [] if c}
     notes = [n for n in fac.get("delivery_notes") or [] if n]
-    closing = {r.get("heat"): r.get("tonnes") or 0 for r in stock.get("closing") or [] if r}
+    closing = {r.get("heat"): r.get("tonnes") for r in stock.get("closing") or [] if r}
     modes = fac.get("_modes", {})
 
     entries = [("opening stock", f"stock.opening[{i}]", r) for i, r in enumerate(stock.get("opening") or []) if r]
@@ -54,7 +54,8 @@ def lots(fac: dict) -> list:
     for kind, key, row in entries:
         heat = row.get("heat")
         tonnes = row.get("tonnes")
-        consumed = None if tonnes is None else tonnes - closing.get(heat, 0)
+        left = closing.get(heat, 0)        # None if the closing count awaits review
+        consumed = None if tonnes is None or left is None else tonnes - left
         via = None
         if kind == "opening stock":
             supplier, mill, link = "opening stock", row.get("mill"), "stock register names the mill"

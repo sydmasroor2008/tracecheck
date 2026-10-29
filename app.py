@@ -205,9 +205,12 @@ def page_checks(folder: str) -> None:
             st.caption("Sources: " + ", ".join(f["sources"]))
             if f["status"] == "open":
                 note = st.text_input("Note", key=f"note-{folder}-{f['key']}")
-                if st.button("Accept with note", key=f"accept-{folder}-{f['key']}") and note.strip():
-                    data.save_flag_note(folder, f["key"], note.strip())
-                    st.rerun()
+                if st.button("Accept with note", key=f"accept-{folder}-{f['key']}"):
+                    if not note.strip():
+                        st.warning("Write a note first: why is this flag accepted?")
+                    else:
+                        data.save_flag_note(folder, f["key"], note.strip())
+                        st.rerun()
             else:
                 st.caption(f"Note: {f['note']}")
 
