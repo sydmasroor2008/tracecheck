@@ -63,3 +63,7 @@
 **tests/test_factory_calc.py** — Checks that the factory result says "input missing" while defaults are not entered, while a field awaits review, or while a fuel unit is wrong. With test defaults it recomputes the result independently from the data.
 
 **tests/test_export.py** — Opens the Excel file for every folder, checks the header line on every sheet, that every number in the evidence index has a source, and that the problem folder's issues and "input missing" values appear.
+
+**app.py** — The Streamlit app with six pages and a demo-folder selector (clean, problem, trader). Dashboard counts; Documents and review shows each document with its fields, mode and confidence, and lets a reviewer approve or correct values; Trace map shows the lot-by-lot precursor status and the shipment chains; Checks lists flags and lets you accept one with a note; Calculation keeps the Commission proof table and shows the factory's illustrative result or "input missing"; Evidence pack downloads the Excel file. Every page shows the SYNTHETIC banner.
+
+**tests/test_app_smoke.py** — Imports app.py with a fake streamlit module and calls every page for every demo folder, so a broken page is caught without starting a browser.
