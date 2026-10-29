@@ -31,3 +31,13 @@
 **config.yaml** — Settings such as the mass-balance tolerance. Illustrative values to agree with a consultant.
 
 **requirements.txt, pytest.ini, .gitignore** — Package list, test settings, and files Git should ignore.
+
+**tools/make_factory.py** — Builds the three synthetic demo folders from a fixed random seed (2026). First it writes the ground truth (every purchase, certificate, register row, invoice and shipment) and the expected flags and precursor statuses worked out from it. Then it draws the documents: PDFs with reportlab and two JPG "phone photos" with Pillow, all marked SYNTHETIC. It also writes cached_fields.json, the CACHED extraction results the app reads.
+
+**tracecheck/model.py** — Pydantic models describing the ground truth and one extracted field. make_factory.py checks its output against them before writing. The app itself never reads the ground truth.
+
+**tracecheck/data.py** — Loads a demo folder: settings, extracted fields, saved approvals and accepted-flag notes. It builds the "facility data" from approved fields only; a field still awaiting review counts as missing. It also records the source document and extraction mode of every value.
+
+**data/clean, data/problem, data/trader** — The generated demo folders. clean has no planted issues, problem has exactly five, trader buys all steel through a trader. Regenerate them with `python tools/make_factory.py`.
+
+**tests/test_factory.py** — Checks the seed gives identical data, the clean totals (200 t consumed, 170 t made, 595 GJ gas, 160 t shipped), that each planted issue is in problem and not in clean, and that every document exists and says SYNTHETIC.

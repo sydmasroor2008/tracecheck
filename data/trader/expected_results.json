@@ -1,0 +1,19 @@
+{
+  "flags": [],
+  "statuses": {
+    "A0": "DEFAULT_REPORT_PERIOD",
+    "T1": "DEFAULT_NO_EMISSIONS_DATA",
+    "T2": "DEFAULT_NO_EMISSIONS_DATA",
+    "T3": "DEFAULT_NO_EMISSIONS_DATA",
+    "T4": "DEFAULT_NO_EMISSIONS_DATA",
+    "T5": "DEFAULT_NO_EMISSIONS_DATA"
+  },
+  "consumed_t": {
+    "A0": 20,
+    "T1": 38,
+    "T2": 38,
+    "T3": 38,
+    "T4": 38,
+    "T5": 28
+  }
+}

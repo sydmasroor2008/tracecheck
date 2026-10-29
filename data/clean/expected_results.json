@@ -1,0 +1,19 @@
+{
+  "flags": [],
+  "statuses": {
+    "A0": "DEFAULT_REPORT_PERIOD",
+    "A1": "ACTUAL_ALLOWED",
+    "A2": "ACTUAL_ALLOWED",
+    "A3": "ACTUAL_ALLOWED",
+    "B1": "DEFAULT_NO_EMISSIONS_DATA",
+    "B2": "DEFAULT_NO_EMISSIONS_DATA"
+  },
+  "consumed_t": {
+    "A0": 20,
+    "A1": 40,
+    "A2": 40,
+    "A3": 40,
+    "B1": 35,
+    "B2": 25
+  }
+}

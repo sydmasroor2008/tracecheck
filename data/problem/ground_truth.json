@@ -1,0 +1,558 @@
+{
+  "folder": "problem",
+  "factory": "Sri Example Fasteners (synthetic)",
+  "reporting_year": 2026,
+  "cn_codes": [
+    "73181558",
+    "73181568"
+  ],
+  "purchases": [
+    {
+      "invoice_no": "PI-A1",
+      "supplier": "Example Steel Mill A, synthetic",
+      "supplier_type": "mill",
+      "heat": "A1",
+      "tonnes": 40,
+      "date": "2026-01-08",
+      "emissions_claim": "actual"
+    },
+    {
+      "invoice_no": "PI-A2",
+      "supplier": "Example Steel Mill A, synthetic",
+      "supplier_type": "mill",
+      "heat": "A2",
+      "tonnes": 40,
+      "date": "2026-03-20",
+      "emissions_claim": "actual"
+    },
+    {
+      "invoice_no": "PI-A3",
+      "supplier": "Example Steel Mill A, synthetic",
+      "supplier_type": "mill",
+      "heat": "A3",
+      "tonnes": 40,
+      "date": "2026-06-05",
+      "emissions_claim": "actual"
+    },
+    {
+      "invoice_no": "PI-B1",
+      "supplier": "Example Steel Traders, synthetic",
+      "supplier_type": "trader",
+      "heat": "B1",
+      "tonnes": 35,
+      "date": "2026-08-03",
+      "emissions_claim": null
+    },
+    {
+      "invoice_no": "PI-B2",
+      "supplier": "Example Steel Traders, synthetic",
+      "supplier_type": "trader",
+      "heat": "B2",
+      "tonnes": 35,
+      "date": "2026-09-25",
+      "emissions_claim": null
+    }
+  ],
+  "delivery_notes": [
+    {
+      "note_no": "DN-B",
+      "supplier": "Example Steel Traders, synthetic",
+      "mill": "Example Steel Mill B, synthetic",
+      "heats": [
+        "B1",
+        "B2"
+      ]
+    }
+  ],
+  "certificates": [
+    {
+      "cert_no": "MC-A0",
+      "heat": "A0",
+      "mill": "Example Steel Mill A, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 20,
+      "production_date": "2025-11-14",
+      "chemistry": {
+        "C": 0.19,
+        "Mn": 0.85,
+        "Si": 0.23,
+        "Cr": 0.11,
+        "Ni": 0.02,
+        "other": 0.02
+      },
+      "layout": "across"
+    },
+    {
+      "cert_no": "MC-A1",
+      "heat": "A1",
+      "mill": "Example Steel Mill A, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 40,
+      "production_date": "2026-01-02",
+      "chemistry": {
+        "C": 0.21,
+        "Mn": 0.83,
+        "Si": 0.24,
+        "Cr": 0.1,
+        "Ni": 0.06,
+        "other": 0.03
+      },
+      "layout": "down"
+    },
+    {
+      "cert_no": "MC-A2",
+      "heat": "A2",
+      "mill": "Example Steel Mill A, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 40,
+      "production_date": "2026-03-14",
+      "chemistry": {
+        "C": 0.2,
+        "Mn": 0.02,
+        "Si": 0.16,
+        "Cr": 0.85,
+        "Ni": 0.02,
+        "other": 0.01
+      },
+      "layout": "two_column"
+    },
+    {
+      "cert_no": "MC-A3",
+      "heat": "A3",
+      "mill": "Example Steel Mill A, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 40,
+      "production_date": "2026-05-29",
+      "chemistry": {
+        "C": 0.2,
+        "Mn": 0.81,
+        "Si": 0.21,
+        "Cr": 0.05,
+        "Ni": 0.08,
+        "other": 0.02
+      },
+      "layout": "across"
+    },
+    {
+      "cert_no": "MC-B1",
+      "heat": "B1",
+      "mill": "Example Steel Mill B, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 35,
+      "production_date": "2026-07-29",
+      "chemistry": {
+        "C": 0.23,
+        "Mn": 0.85,
+        "Si": 0.16,
+        "Cr": 0.05,
+        "Ni": 0.05,
+        "other": 0.02
+      },
+      "layout": "down"
+    },
+    {
+      "cert_no": "MC-B2",
+      "heat": "B2",
+      "mill": "Example Steel Mill B, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 35,
+      "production_date": "2026-09-20",
+      "chemistry": {
+        "C": 0.19,
+        "Mn": 0.88,
+        "Si": 0.26,
+        "Cr": 0.05,
+        "Ni": 0.07,
+        "other": 0.02
+      },
+      "layout": "two_column"
+    },
+    {
+      "cert_no": "MC-X9",
+      "heat": "X9",
+      "mill": "Example Steel Mill A, synthetic",
+      "grade": "SAE 1022 (synthetic)",
+      "tonnes": 40,
+      "production_date": "2026-05-02",
+      "chemistry": {
+        "C": 0.21,
+        "Mn": 0.9,
+        "Si": 0.24,
+        "Cr": 0.07,
+        "Ni": 0.07,
+        "other": 0.02
+      },
+      "layout": "down"
+    }
+  ],
+  "verification_reports": [
+    {
+      "report_no": "VR-A",
+      "mill": "Example Steel Mill A, synthetic",
+      "period_year": 2025,
+      "precursor_see": 1.567,
+      "label": "Commission example value used as a synthetic stand-in. Not a real mill, not a default value."
+    }
+  ],
+  "production": [
+    {
+      "month": "2026-01",
+      "tonnes": 14,
+      "cn_code": "73181558",
+      "heats": [
+        "A0"
+      ]
+    },
+    {
+      "month": "2026-02",
+      "tonnes": 14,
+      "cn_code": "73181568",
+      "heats": [
+        "A0",
+        "A1"
+      ]
+    },
+    {
+      "month": "2026-03",
+      "tonnes": 14,
+      "cn_code": "73181558",
+      "heats": [
+        "A1"
+      ]
+    },
+    {
+      "month": "2026-04",
+      "tonnes": 14,
+      "cn_code": "73181568",
+      "heats": [
+        "A1",
+        "A2"
+      ]
+    },
+    {
+      "month": "2026-05",
+      "tonnes": 14,
+      "cn_code": "73181558",
+      "heats": [
+        "A2"
+      ]
+    },
+    {
+      "month": "2026-06",
+      "tonnes": 14,
+      "cn_code": "73181568",
+      "heats": [
+        "A2"
+      ]
+    },
+    {
+      "month": "2026-07",
+      "tonnes": 15,
+      "cn_code": "73181558",
+      "heats": [
+        "A2",
+        "A3"
+      ]
+    },
+    {
+      "month": "2026-08",
+      "tonnes": 14,
+      "cn_code": "73181568",
+      "heats": [
+        "A3"
+      ]
+    },
+    {
+      "month": "2026-09",
+      "tonnes": 14,
+      "cn_code": "73181558",
+      "heats": [
+        "A3",
+        "B1"
+      ]
+    },
+    {
+      "month": "2026-10",
+      "tonnes": 14,
+      "cn_code": "73181568",
+      "heats": [
+        "B1"
+      ]
+    },
+    {
+      "month": "2026-11",
+      "tonnes": 15,
+      "cn_code": "73181558",
+      "heats": [
+        "B1",
+        "B2"
+      ]
+    },
+    {
+      "month": "2026-12",
+      "tonnes": 14,
+      "cn_code": "73181568",
+      "heats": [
+        "B2"
+      ]
+    }
+  ],
+  "stock": {
+    "opening": [
+      {
+        "heat": "A0",
+        "tonnes": 20,
+        "mill": "Example Steel Mill A, synthetic"
+      }
+    ],
+    "closing": [
+      {
+        "heat": "B2",
+        "tonnes": 10,
+        "mill": "Example Steel Mill B, synthetic"
+      }
+    ],
+    "count_note": "Counted 31 Dec by R. (synthetic). Rack 3 checked twice."
+  },
+  "scrap": {
+    "tonnes": 15,
+    "pre_consumer_share": 1.0,
+    "sources": "cutting and forging"
+  },
+  "fuel": [
+    {
+      "invoice_no": "GI-01",
+      "month": "2026-01",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-02",
+      "month": "2026-02",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-03",
+      "month": "2026-03",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-04",
+      "month": "2026-04",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-05",
+      "month": "2026-05",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-06",
+      "month": "2026-06",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-07",
+      "month": "2026-07",
+      "fuel": "natural gas",
+      "quantity": 52.5,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-08",
+      "month": "2026-08",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "kg",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-09",
+      "month": "2026-09",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-10",
+      "month": "2026-10",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-11",
+      "month": "2026-11",
+      "fuel": "natural gas",
+      "quantity": 52.5,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    },
+    {
+      "invoice_no": "GI-12",
+      "month": "2026-12",
+      "fuel": "natural gas",
+      "quantity": 49.0,
+      "unit": "GJ",
+      "emission_factor_t_per_tj": 56.1
+    }
+  ],
+  "shipments": [
+    {
+      "invoice_no": "EX-01",
+      "date": "2026-02-27",
+      "destination": "DE",
+      "cn_code": "73181558",
+      "tonnes": 18,
+      "production_months": [
+        "2026-01",
+        "2026-02"
+      ]
+    },
+    {
+      "invoice_no": "EX-02",
+      "date": "2026-03-26",
+      "destination": "NL",
+      "cn_code": "73181568",
+      "tonnes": 22,
+      "production_months": [
+        "2026-02",
+        "2026-03"
+      ]
+    },
+    {
+      "invoice_no": "EX-03",
+      "date": "2026-05-21",
+      "destination": "IT",
+      "cn_code": "73181558",
+      "tonnes": 20,
+      "production_months": [
+        "2026-03",
+        "2026-04",
+        "2026-05"
+      ]
+    },
+    {
+      "invoice_no": "EX-04",
+      "date": "2026-07-26",
+      "destination": "FR",
+      "cn_code": "73181568",
+      "tonnes": 25,
+      "production_months": [
+        "2026-05",
+        "2026-06",
+        "2026-07"
+      ]
+    },
+    {
+      "invoice_no": "EX-05",
+      "date": "2026-08-28",
+      "destination": "DE",
+      "cn_code": "73181558",
+      "tonnes": 15,
+      "production_months": [
+        "2026-07",
+        "2026-08"
+      ]
+    },
+    {
+      "invoice_no": "EX-06",
+      "date": "2026-09-27",
+      "destination": "NL",
+      "cn_code": "73181568",
+      "tonnes": 20,
+      "production_months": [
+        "2026-08",
+        "2026-09"
+      ]
+    },
+    {
+      "invoice_no": "EX-07",
+      "date": "2026-10-21",
+      "destination": "IT",
+      "cn_code": "73181558",
+      "tonnes": 21,
+      "production_months": [
+        "2026-09",
+        "2026-10"
+      ]
+    },
+    {
+      "invoice_no": "EX-08",
+      "date": "2026-12-26",
+      "destination": "FR",
+      "cn_code": "73181568",
+      "tonnes": 19,
+      "production_months": [
+        "2026-11",
+        "2026-12"
+      ]
+    }
+  ],
+  "planted_issues": [
+    "MASS_BALANCE",
+    "CERT_NO_PURCHASE",
+    "PRECURSOR_EVIDENCE",
+    "FUEL_UNIT",
+    "CHEMISTRY_RANGE"
+  ],
+  "documents": [
+    "PI-A1.pdf",
+    "PI-A2.pdf",
+    "PI-A3.pdf",
+    "PI-B1.pdf",
+    "PI-B2.pdf",
+    "DN-B.pdf",
+    "MC-A0.pdf",
+    "MC-A1.pdf",
+    "MC-A2.pdf",
+    "MC-A3.pdf",
+    "MC-B1.pdf",
+    "MC-B2.pdf",
+    "MC-X9.pdf",
+    "VR-A.pdf",
+    "production_register.pdf",
+    "scrap_register.pdf",
+    "stock_register.pdf",
+    "GI-01.pdf",
+    "GI-02.pdf",
+    "GI-03.jpg",
+    "GI-04.pdf",
+    "GI-05.pdf",
+    "GI-06.pdf",
+    "GI-07.pdf",
+    "GI-08.pdf",
+    "GI-09.pdf",
+    "GI-10.pdf",
+    "GI-11.pdf",
+    "GI-12.pdf",
+    "EX-01.pdf",
+    "EX-02.pdf",
+    "EX-03.jpg",
+    "EX-04.pdf",
+    "EX-05.pdf",
+    "EX-06.pdf",
+    "EX-07.pdf",
+    "EX-08.pdf"
+  ]
+}

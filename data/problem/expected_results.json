@@ -1,0 +1,25 @@
+{
+  "flags": [
+    "CERT_NO_PURCHASE",
+    "CHEMISTRY_RANGE",
+    "FUEL_UNIT",
+    "MASS_BALANCE",
+    "PRECURSOR_EVIDENCE"
+  ],
+  "statuses": {
+    "A0": "ACTUAL_ALLOWED",
+    "A1": "DEFAULT_REPORT_PERIOD",
+    "A2": "DEFAULT_REPORT_PERIOD",
+    "A3": "DEFAULT_REPORT_PERIOD",
+    "B1": "DEFAULT_NO_EMISSIONS_DATA",
+    "B2": "DEFAULT_NO_EMISSIONS_DATA"
+  },
+  "consumed_t": {
+    "A0": 20,
+    "A1": 40,
+    "A2": 40,
+    "A3": 40,
+    "B1": 35,
+    "B2": 25
+  }
+}
