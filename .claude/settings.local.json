@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python -m pytest -q)",
+      "Bash(.venv/Scripts/python tools/measure_extraction.py clean)"
+    ]
+  }
+}

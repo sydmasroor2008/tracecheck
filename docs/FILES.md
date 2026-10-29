@@ -41,3 +41,9 @@
 **data/clean, data/problem, data/trader** — The generated demo folders. clean has no planted issues, problem has exactly five, trader buys all steel through a trader. Regenerate them with `python tools/make_factory.py`.
 
 **tests/test_factory.py** — Checks the seed gives identical data, the clean totals (200 t consumed, 170 t made, 595 GJ gas, 160 t shipped), that each planted issue is in problem and not in clean, and that every document exists and says SYNTHETIC.
+
+**tracecheck/extract.py** — One function, `extract(doc, mode)`, for reading a document into fields. CACHED reads saved results from cached_fields.json and works offline. MANUAL wraps values a person typed. LIVE is a placeholder that says "LIVE mode not configured" unless the environment variable TRACECHECK_LIVE_KEY is set, and is not built in this prototype.
+
+**tools/measure_extraction.py** — Compares extracted fields with the ground truth and prints the share that match, per document type. In CACHED mode it prints 100 percent with the note "CACHED mode, not a real accuracy measure", because the cached values were made from the ground truth.
+
+**tests/test_extract.py** — Checks that CACHED mode loads every document, that the low-confidence fields (photo, stamp, handwritten note) need review and start unapproved, and that LIVE mode without a key gives a clear message.
