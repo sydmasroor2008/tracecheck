@@ -47,3 +47,7 @@
 **tools/measure_extraction.py** — Compares extracted fields with the ground truth and prints the share that match, per document type. In CACHED mode it prints 100 percent with the note "CACHED mode, not a real accuracy measure", because the cached values were made from the ground truth.
 
 **tests/test_extract.py** — Checks that CACHED mode loads every document, that the low-confidence fields (photo, stamp, handwritten note) need review and start unapproved, and that LIVE mode without a key gives a clear message.
+
+**tracecheck/checks.py** — The reconciliation checks. Each one takes the reviewed facility data and returns flags with an id, a severity, a plain-English message and the source documents. Missing links are called "link missing", never fraud. A flag can be accepted with a note, which is saved in data/<folder>/flag_notes.json.
+
+**tests/test_checks.py** — Runs all checks on the three demo folders and compares them with expected_results.json: clean and trader give zero flags, problem exactly the five planted ones. It also has one small hand-built case for each check.

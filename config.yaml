@@ -8,3 +8,10 @@ mass_balance_tolerance: 0.02
 review_confidence_threshold: 0.85
 
 reporting_year: 2026
+
+# Chemistry check: illustrative synthetic ranges, % by mass. Not real grade limits.
+grade_ranges:
+  "SAE 1022 (synthetic)":
+    Mn: [0.70, 1.00]
+    Cr: [0.00, 0.20]
+    Ni: [0.00, 0.20]
