@@ -1,0 +1,10 @@
+# TraceCheck settings. Illustrative values; agree them with a CBAM consultant.
+
+# Material reconciliation: allowed gap between steel consumed and
+# (product + scrap), as a share of steel consumed. 0.02 = 2 percent.
+mass_balance_tolerance: 0.02
+
+# Extraction: fields below this confidence are marked needs_review.
+review_confidence_threshold: 0.85
+
+reporting_year: 2026
