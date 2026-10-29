@@ -59,4 +59,4 @@ Everything. The factory "Sri Example Fasteners", the mills, the trader and every
 
 ## Limits
 
-TraceCheck does not issue a verification, replace a verifier, submit to the CBAM Registry, calculate the CBAM obligation, show any saving, or track electricity. LIVE extraction is not built; MANUAL and CACHED modes only.
+TraceCheck does not issue a verification, replace a verifier, submit to the CBAM Registry, calculate the CBAM obligation, show any money figure, or track electricity. LIVE extraction is not built; MANUAL and CACHED modes only.

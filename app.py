@@ -162,7 +162,7 @@ def page_documents(folder: str) -> None:
             field = next((f for f in fields if f["key"] == key), None)
             if field:
                 typed = st.text_input("Corrected value", value=show(field["value"]), key=f"fixv-{folder}-{key}")
-                if st.button("Save correction (mode becomes MANUAL)", key=f"fixb-{folder}-{key}"):
+                if st.button("Apply correction (mode becomes MANUAL)", key=f"fixb-{folder}-{key}"):
                     try:
                         data.save_approval(folder, key, parse_like(field["value"], typed), edited=True)
                     except ValueError:

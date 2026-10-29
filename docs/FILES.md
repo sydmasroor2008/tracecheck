@@ -71,3 +71,7 @@
 **.streamlit/config.toml** — Streamlit settings for the demo laptop: no usage statistics sent, the app only listens on localhost, and a minimal toolbar. This keeps the app fully offline.
 
 **README.md** — What TraceCheck does in five lines, how to run it, how to run the tests, how to regenerate the demo data, what is synthetic, what was not verified, and its limits.
+
+**tests/test_words.py** — Searches app.py, the tracecheck and tools code, README, run.bat and config.yaml for the banned words (certified, audit-ready, compliant, ISO, guaranteed, official, saves or saving, and money amounts). It fails if any comes back.
+
+**BUILD_REPORT.md** — The team's summary of steps 4 to 12: each screen and a 90-second demo script, the test result, the flags and precursor statuses each folder gives, what was not verified or was cut, and the final 10-point check.
