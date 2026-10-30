@@ -112,16 +112,10 @@ def pick_flash_model(names: list) -> Optional[str]:
     return max(found)[1] if found else None
 
 
-def key_names() -> list:
-    """Names of the key variables that are set: GEMINI_API_KEY, then GEMINI_API_KEY_2 ... _9."""
-    names = [KEY_ENV] + [f"{KEY_ENV}_{i}" for i in range(2, 10)]
-    return [n for n in names if os.environ.get(n)]
-
-
-def make_client(key_env: str = KEY_ENV):
-    key = os.environ.get(key_env)
+def make_client():
+    key = os.environ.get(KEY_ENV)
     if not key:
-        raise LiveNotConfigured(f"LIVE mode not configured: set the environment variable {key_env}.")
+        raise LiveNotConfigured(f"LIVE mode not configured: set the environment variable {KEY_ENV}.")
     from google import genai
     from google.genai import types
     return genai.Client(api_key=key, http_options=types.HttpOptions(timeout=TIMEOUT_MS))

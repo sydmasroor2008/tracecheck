@@ -86,20 +86,12 @@ def retry_seconds(text: str) -> float:
 
 
 def read_live(folder: str, docs: list, client=None, replay: bool = False, resume: bool = False,
-              tries: int = 3, pause: float = 0.0, max_quota_errors: int = 3, sleep=time.sleep,
-              clients: list = None) -> dict:
+              tries: int = 3, pause: float = 0.0, max_quota_errors: int = 3, sleep=time.sleep) -> dict:
     """{doc file: LIVE result or None}. Each new result is written to live_fields.json at once.
 
     resume keeps results already saved with the same model; pause spaces requests (free tier:
-    5 per minute). On a per-day quota error the next key (GEMINI_API_KEY_2, _3, ...) takes over
-    with the same model; when every key is used up, or after max_quota_errors per-minute 429s
-    in a row, QuotaStop is raised. clients is [(name, client)] for tests."""
+    5 per minute). A per-day quota error, or max_quota_errors 429s in a row, raises QuotaStop."""
     saved = extract.load_live(folder)
-    pool = list(clients) if clients else [("client", client)] if client else \
-        [(name, None) for name in extract.key_names()]
-    if not pool and not replay:
-        pool = [(extract.KEY_ENV, None)]                       # make_client explains what is missing
-    k = 0
     out = {}
     in_a_row = 0
     for d in docs:
@@ -107,38 +99,25 @@ def read_live(folder: str, docs: list, client=None, replay: bool = False, resume
         if replay or (resume and old and old["model"] == extract.model_name()):
             out[d["file"]] = old
             continue
+        client = client or extract.make_client()
         out[d["file"]] = None
-        attempt = 0
-        while attempt < tries:
-            name, c = pool[k]
-            if c is None:
-                c = extract.make_client(name)
-                pool[k] = (name, c)
+        for attempt in range(tries):
             try:
-                out[d["file"]] = extract.extract_live(folder, d["file"], d["type"], c)
-                out[d["file"]]["key_env"] = name                 # which key variable, never the key
+                out[d["file"]] = extract.extract_live(folder, d["file"], d["type"], client)
                 extract.save_live(folder, d["file"], out[d["file"]])
                 in_a_row = 0
                 break
-            except Exception as exc:  # quota or network: switch key, wait and retry, or give up
+            except Exception as exc:  # quota or network: wait and retry, or give up
                 text = str(exc)
-                print(f"  {d['file']}: attempt {attempt + 1} with {name} failed: {text.splitlines()[0][:90]}")
+                print(f"  {d['file']}: attempt {attempt + 1} failed: {text.splitlines()[0][:100]}")
                 kind = quota_kind(text)
-                if kind == "day":
-                    k += 1
-                    in_a_row = 0
-                    if k >= len(pool):
-                        raise QuotaStop(text)
-                    print(f"  {name}: per-day quota used up; switching to {pool[k][0]} ({extract.model_name()})")
-                    continue
                 if kind:
                     in_a_row += 1
-                    if in_a_row >= max_quota_errors:
+                    if kind == "day" or in_a_row >= max_quota_errors:
                         raise QuotaStop(text)
                     sleep(retry_seconds(text) + 2)
                 else:
                     sleep(10 * (attempt + 1))
-                attempt += 1
         print(f"  read {d['file']}: {'ok' if out[d['file']] else 'FAILED'}")
         sleep(pause)
     return out
@@ -287,9 +266,7 @@ def main() -> None:
     except QuotaStop as exc:
         done = extract.load_live(args.folder)
         left = [d["file"] for d in docs if d["file"] not in done or done[d["file"]]["model"] != extract.model_name()]
-        kind = quota_kind(str(exc))
-        which = f"on every key ({', '.join(extract.key_names())})" if kind == "day" else "(3 in a row)"
-        print(f"\nStopped: Gemini {kind} quota used up {which}. Full error:\n{exc}\n")
+        print(f"\nStopped: Gemini {quota_kind(str(exc))} quota used up. Full error:\n{exc}\n")
         print(f"Saved in live_fields.json: {len(docs) - len(left)} of {len(docs)} documents. Not read yet: {', '.join(left)}")
         print(f"docs/ACCURACY.md was not changed. When the quota resets, run:\n"
               f"  python tools/measure_extraction.py --folder {args.folder} --mode live --resume")
