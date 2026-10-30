@@ -171,6 +171,20 @@ def lot_card(css_name: str, heat: str, t, mill: str, sub: str, mode, step: str, 
             f'<div class="label">Next step</div><div class="lot-next" title="{escape(full_step)}">{escape(step)}</div></div>')
 
 
+def review_card(done: int, total: int) -> str:
+    return (f'<div class="card ready-card"><div class="row"><span class="num">{done}</span>'
+            f'<span class="txt">of {total} documents approved</span></div></div>')
+
+
+def doc_legend(need: int) -> str:
+    return (f'<div class="doclegend"><span class="label">Documents</span>'
+            f'<span class="small"><b>!</b> {need} need a check · <b>✓</b> approved</span></div>')
+
+
+def small_tip(text: str) -> str:
+    return f'<div class="small tipline">{escape(text)}</div>'
+
+
 def window(file_name: str, mode: str, image_uri: str, scanning: bool = False) -> str:
     scan = ('<div class="scan"></div><div class="reading">Gemini is reading…</div>' if scanning else "")
     return (f'<div class="window"><div class="winbar"><i class="a"></i><i class="b"></i><i class="c"></i>'

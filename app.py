@@ -4,7 +4,9 @@ Six pages over one synthetic demo folder (clean, problem or trader).
 Works offline in CACHED mode. No login, no internet.
 """
 
+import base64
 import re
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
@@ -19,10 +21,18 @@ from tracecheck.factory_calc import factory_see
 from tracecheck.trace import ACTUAL_ALLOWED, DEFAULT_NO_EMISSIONS_DATA, DEFAULT_REPORT_PERIOD, STATUS_TEXT, chains, lots
 
 BANNER = "SYNTHETIC DATA · Draft prepared for verifier review · Illustrative, for evidence preparation"
-DESIGN_LINE = "AI reads, code calculates, a person approves."
+DESIGN_LINE = "AI reads · code calculates · a person approves"
 
 PAGES = ["Overview", "1 Read", "2 Trace", "3 Check", "4 Calculate", "5 Export"]
 SCENARIOS = {"clean": "Clean factory", "problem": "Factory with problems", "trader": "Trader supply chain"}
+
+DOC_ICON = {
+    "purchase_invoice": ":material/receipt_long:", "gas_invoice": ":material/local_fire_department:",
+    "export_invoice": ":material/local_shipping:", "mill_certificate": ":material/workspace_premium:",
+    "delivery_note": ":material/inventory_2:", "verification_report": ":material/task_alt:",
+    "production_register": ":material/menu_book:", "scrap_register": ":material/menu_book:",
+    "stock_register": ":material/menu_book:",
+}
 
 STATUS_ICON = {
     "ACTUAL_ALLOWED": "🟢",
@@ -155,73 +165,94 @@ def page_overview(folder: str) -> None:
     foot()
 
 
+@lru_cache(maxsize=64)
+def doc_image(path: str) -> str:
+    """First page of a document as a data URI, for the paper sheet."""
+    raw, mime = extract.page_images(Path(path))[0]
+    return f"data:{mime};base64," + base64.b64encode(raw).decode("ascii")
+
+
+def pick_doc(folder: str, name: str) -> None:
+    st.session_state[f"doc-{folder}"] = name
+
+
+def doc_list(folder: str, docs: list, pending_docs: list, chosen: str) -> None:
+    ordered = sorted(docs, key=lambda d: d["file"] not in pending_docs)
+    with st.container(height=520, key="doclist", border=False):
+        for i, d in enumerate(ordered):
+            state = ("need" if d["file"] in pending_docs else "ok") + ("-sel" if d["file"] == chosen else "")
+            st.button(d["file"], key=f"doc-{state}-{i}", icon=DOC_ICON.get(d["type"]), help=d["title"],
+                      on_click=pick_doc, args=(folder, d["file"]))
+
+
+def field_review(folder: str, f: dict, i: int) -> None:
+    """One field that needs a person: its row, the value box and Approve."""
+    st.html(ui.field_row(f["label"], show(f["value"], f["unit"]), f["mode"], f["confidence"], check=True))
+    with st.container(horizontal=True, key=f"chk-{i}"):
+        typed = st.text_input("Value", value=show(f["value"]), key=f"edit-{folder}-{f['key']}",
+                              label_visibility="collapsed")
+        if st.button("Approve", key=f"approve-{folder}-{f['key']}"):
+            edited = typed != show(f["value"])
+            try:
+                value = parse_like(f["value"], typed) if edited else f["value"]
+            except ValueError:
+                st.error("Please type a number.")
+                return
+            data.save_approval(folder, f["key"], value, edited=edited)
+            st.session_state["last_approved"] = f["key"]
+            st.rerun()
+
+
 def page_documents(folder: str) -> None:
     s = load(folder)
-    st.header("Documents and review")
     docs = data.load_documents(folder)
     pending_docs = sorted({f["source_file"] for f in s["fields"] if not f["approved"]})
-    if pending_docs:
-        st.info("Fields awaiting review in: " + ", ".join(pending_docs))
-    labels = [f"{'⚠ ' if d['file'] in pending_docs else ''}{d['file']} · {d['title']}" for d in docs]
     pending_first = sorted(pending_docs, key=lambda name: not name.endswith(".jpg"))
-    first = next((i for i, d in enumerate(docs) if pending_first and d["file"] == pending_first[0]), 0)
-    choice = st.selectbox("Document", labels, index=first)
-    doc = docs[labels.index(choice)]
+    chosen = st.session_state.setdefault(f"doc-{folder}", pending_first[0] if pending_first else docs[0]["file"])
+    doc = next(d for d in docs if d["file"] == chosen)
     path = data.folder_path(folder) / "docs" / doc["file"]
+    fields = [f for f in s["fields"] if f["source_file"] == doc["file"]]
+    modes = " + ".join(sorted({f["mode"] for f in fields})) or "CACHED"
 
-    st.caption(f"**{DESIGN_LINE}** Gemini never calculates, never decides a flag or a precursor status, "
-               "and never sends anything.")
-    ai = st.columns(2)
-    if ai[0].button("Read with AI", key=f"ai-{folder}-{doc['file']}"):
-        fields, message = extract.read_with_ai(folder, doc["file"])
-        if fields and fields[0]["mode"] == "LIVE":
-            data.clear_approvals(folder, [f["key"] for f in fields])
-            data.set_live_doc(folder, doc["file"], True)
-        st.session_state["ai_message"] = message
-        st.rerun()
-    if doc["file"] in data.live_docs(folder) and ai[1].button("Use CACHED fields again",
-                                                              key=f"cached-{folder}-{doc['file']}"):
-        data.set_live_doc(folder, doc["file"], False)
-        st.rerun()
-    if st.session_state.get("ai_message"):
-        st.info(st.session_state.pop("ai_message"))
-
-    left, right = st.columns(2)
+    st.html(ui.head("Step 1 · Read the documents", "What did the AI read?", DESIGN_LINE,
+                    side=ui.review_card(len(docs) - len(pending_docs), len(docs))))
+    left, right = st.columns([5, 7], gap="medium")
     with left:
-        if path.suffix == ".jpg":
-            st.image(str(path), caption=f"{doc['file']} (SYNTHETIC photo)")
-        else:
-            st.download_button("Open the PDF", path.read_bytes(), file_name=doc["file"],
-                               mime="application/pdf")
-            st.caption(f"{doc['file']} (SYNTHETIC). The fields read from it are on the right.")
+        st.html(ui.doc_legend(len(pending_docs)))
+        doc_list(folder, docs, pending_docs, chosen)
     with right:
-        fields = [f for f in s["fields"] if f["source_file"] == doc["file"]]
-        st.dataframe(pd.DataFrame([{
-            "Field": f["label"], "Value": show(f["value"], f["unit"]), "Mode": f["mode"],
-            "Confidence": f["confidence"],
-            "Review": ("approved · " + f["reviewer"]) if f["approved"] else "⚠ needs review",
-        } for f in fields]), hide_index=True)
+        sheet = st.empty()
+        sheet.html(ui.window(doc["file"], modes, doc_image(str(path))))
+        with st.container(horizontal=True, key="aibar"):
+            read = st.button("Read with AI", key=f"ai-{folder}-{doc['file']}")
+            if doc["file"] in data.live_docs(folder) and st.button("Use CACHED fields again",
+                                                                   key=f"cached-{folder}-{doc['file']}"):
+                data.set_live_doc(folder, doc["file"], False)
+                st.rerun()
+            if path.suffix != ".jpg":
+                st.download_button("Open the PDF", path.read_bytes(), file_name=doc["file"], mime="application/pdf")
+        if read:
+            sheet.html(ui.window(doc["file"], modes, doc_image(str(path)), scanning=True))
+            fields_read, message = extract.read_with_ai(folder, doc["file"])
+            if fields_read and fields_read[0]["mode"] == "LIVE":
+                data.clear_approvals(folder, [f["key"] for f in fields_read])
+                data.set_live_doc(folder, doc["file"], True)
+            st.session_state["ai_message"] = message
+            st.rerun()
+        if st.session_state.get("ai_message"):
+            st.info(st.session_state.pop("ai_message"))
+        st.html(ui.small_tip("Gemini never calculates, never decides a flag or a precursor status, and never sends anything."))
+
         unapproved = [f for f in fields if not f["approved"]]
         if len(unapproved) > 1 and st.button("Approve all values on this document as shown",
                                              key=f"approve-all-{folder}-{doc['file']}"):
             for f in unapproved:
                 data.save_approval(folder, f["key"], f["value"])
             st.rerun()
-        for f in fields:
-            if f["approved"]:
-                continue
-            st.markdown(f"**⚠ {f['label']}** · confidence {f['confidence']} · mode {f['mode']}")
-            typed = st.text_input("Value", value=show(f["value"]), key=f"edit-{folder}-{f['key']}")
-            if st.button("Approve", key=f"approve-{folder}-{f['key']}"):
-                edited = typed != show(f["value"])
-                try:
-                    value = parse_like(f["value"], typed) if edited else f["value"]
-                except ValueError:
-                    st.error("Please type a number.")
-                    return
-                data.save_approval(folder, f["key"], value, edited=edited)
-                st.session_state["last_approved"] = f["key"]
-                st.rerun()
+        for i, f in enumerate(unapproved):
+            field_review(folder, f, i)
+        st.html("".join(ui.field_row(f["label"], show(f["value"], f["unit"]), f["mode"], f["confidence"])
+                        for f in fields if f["approved"]))
         with st.expander("Correct an approved value"):
             keys = [f["key"] for f in fields]
             key = st.selectbox("Field", keys, key=f"fix-{folder}-{doc['file']}")
@@ -235,10 +266,11 @@ def page_documents(folder: str) -> None:
                         st.error("Please type a number.")
                         return
                     st.rerun()
-    if st.button("Reset all reviews in this folder"):
-        data.reset_approvals(folder)
-        st.rerun()
-    upload_section()
+            if st.button("Reset all reviews in this folder"):
+                data.reset_approvals(folder)
+                st.rerun()
+        upload_section()
+    foot("Next: 2 Trace the steel →", "2 Trace")
 
 
 def upload_section() -> None:
