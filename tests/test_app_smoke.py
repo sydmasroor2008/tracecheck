@@ -61,6 +61,16 @@ def test_every_page_renders(app, folder):
     assert "Precursor status" in shown
 
 
+@pytest.mark.parametrize("folder", ["clean", "problem", "trader"])
+def test_every_page_ends_with_its_button(app, folder):
+    mod, st = app
+    for name, page in mod.RENDER.items():
+        st.calls.clear()
+        page(folder)
+        labels = [args[0] for call, args in st.calls if call == "button"]
+        assert labels[-1].endswith("→"), name
+
+
 def test_main_shows_banner(app):
     mod, st = app
     mod.main()

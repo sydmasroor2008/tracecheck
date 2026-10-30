@@ -26,6 +26,7 @@ BANNER = "SYNTHETIC DATA · Draft prepared for verifier review · Illustrative, 
 DESIGN_LINE = "AI reads · code calculates · a person approves"
 
 PAGES = ["Overview", "1 Read", "2 Trace", "3 Check", "4 Calculate", "5 Export"]
+FULL_LOT_CARDS = 3   # more lots than this in a verdict column become one-line rows
 SCENARIOS = {"clean": "Clean factory", "problem": "Factory with problems", "trader": "Trader supply chain"}
 
 DOC_ICON = {
@@ -269,8 +270,8 @@ def page_documents(folder: str) -> None:
                         data.save_approval(folder, key, parse_like(field["value"], typed), edited=True)
                     except ValueError:
                         st.error("Please type a number.")
-                        return
-                    st.rerun()
+                    else:
+                        st.rerun()
             if st.button("Reset all reviews in this folder"):
                 data.reset_approvals(folder)
                 st.rerun()
@@ -348,14 +349,33 @@ def open_draft(folder: str, g: dict) -> None:
 
 
 def lot_cards(folder: str, status: str, lot_list: list, groups: list) -> None:
+    """The first lots as full cards; the rest as one-line rows, with their cards under Show all."""
     name = ui.VERDICT[status][0]
-    for lot in lot_list:
+
+    def request_group(lot: dict):
+        return next((g for g in groups if lot["heat"] in g["heats"]), None) if status != ACTUAL_ALLOWED else None
+
+    def card(lot: dict) -> None:
         with st.container(key=f"lot-{lot['heat']}"):
             st.html(ui.lot_card(name, lot["heat"], lot["consumed_t"], short_name(lot["mill"]) or "Mill not known",
                                 lot_line(lot), lot["mode"], lot_step(lot), lot["next_action"]))
-            group = next((g for g in groups if lot["heat"] in g["heats"]), None)
-            if status != ACTUAL_ALLOWED and group and st.button("Draft request with AI", key=f"ask-{lot['heat']}"):
+            group = request_group(lot)
+            if group and st.button("Draft request with AI", key=f"ask-{lot['heat']}"):
                 open_draft(folder, group)
+
+    for lot in lot_list[:FULL_LOT_CARDS]:
+        card(lot)
+    rest = lot_list[FULL_LOT_CARDS:]
+    for lot in rest:
+        with st.container(horizontal=True, key=f"lotrow-{lot['heat']}"):
+            st.html(ui.lot_row(name, lot["heat"], lot["consumed_t"], lot["mode"], lot["next_action"]))
+            group = request_group(lot)
+            if group and st.button("✦", key=f"askrow-{lot['heat']}", help="Draft request with AI"):
+                open_draft(folder, group)
+    if rest:
+        with st.expander("Show all"):
+            for lot in rest:
+                card(lot)
 
 
 def page_trace(folder: str) -> None:
@@ -516,7 +536,7 @@ def page_evidence(folder: str) -> None:
                            file_name=f"tracecheck_evidence_pack_{folder}_SYNTHETIC.xlsx",
                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         st.html(ui.small_tip("Draft prepared for verifier review"))
-    foot()
+    foot("Back to Overview →", "Overview", primary=False)
 
 
 RENDER = {
@@ -549,12 +569,12 @@ def top_bar() -> str:
     return folder
 
 
-def foot(next_label: str = None, target: str = None) -> None:
+def foot(next_label: str = None, target: str = None, primary: bool = True) -> None:
     """Every screen ends with the honesty line and one button to the next step."""
     with st.container(horizontal=True, key="foot"):
         st.html(ui.footline(BANNER))
         if next_label:
-            st.button(next_label, type="primary", key="next", on_click=go, args=(target,))
+            st.button(next_label, type="primary" if primary else "secondary", key="next", on_click=go, args=(target,))
 
 
 def main() -> None:

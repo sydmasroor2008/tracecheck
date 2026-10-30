@@ -6,7 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 BANNED = re.compile(r"certif(ied|y)|audit-ready|compliant|\bISO\b|guarantee|official|(?<!\.)\bsaves?\b|"
                     r"saving|rupee|₹|€|\bEUR\b|\bINR\b", re.IGNORECASE)
-FILES = (["app.py", "README.md", "run.bat", "config.yaml"]
+FILES = (["app.py", "ui.py", "static/style.css", "README.md", "run.bat", "config.yaml"]
          + [str(p.relative_to(ROOT)) for p in (ROOT / "tracecheck").glob("*.py")]
          + [str(p.relative_to(ROOT)) for p in (ROOT / "tools").glob("*.py")])
 

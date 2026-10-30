@@ -14,7 +14,10 @@
 - **Overview path title reads "Three of five stages complete".** The mockup says "Four", but it also shows only three stages done. The app counts.
 - **Evidence pack tile shows 4 inputs in the clean scenario**, not 3: three default values plus the March gas invoice still awaiting review. The app counts this too.
 - **Fields approved is counted in documents** ("33 of 36 docs"), which is what the mockup's 33 of 36 means.
-- **Top bar shows the wordmark on every screen.** The Trace mockup dropped it.
+- **Top bar shows only the 40 px logo mark.** The team removed the wordmark after the first build; DESIGN_PLAN.md section 10 and the Overview mockup still show it.
+- **Verdict columns with more than 3 lots** show the rest as one-line rows, with their full cards under Show all. Rows keep a mode chip, because the plan requires the mode next to values.
+- **Below 1100 px** the step labels hide (Overview keeps its word, as it has no number), the Scenario selector and pill move to a second row, and all screen titles drop to 40 px.
+- **Export ends with a quiet "Back to Overview →"** as it has no next step. **Overview ends with the Start button** in its last tile, as in the mockup.
 - **The Scenario selector is wider** (244 px) so "Factory with problems" fits.
 - **Lot cards carry a mode chip** (CACHED / LIVE / MANUAL), which the mockup lacks but the plan's hard limits require.
 - **The "Try Factory with problems" hint is left out** of the empty Untraced column. No scenario has an untraced lot, so it would point nowhere.

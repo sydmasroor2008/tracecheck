@@ -80,7 +80,7 @@
 
 **README.md** — What TraceCheck does in five lines, how to run it, how to run the tests, how to regenerate the demo data, what is synthetic, what was not verified, and its limits.
 
-**tests/test_words.py** — Searches app.py, the tracecheck and tools code, README, run.bat and config.yaml for the banned words (certified, audit-ready, compliant, ISO, guaranteed, official, saves or saving, and money amounts). It fails if any comes back.
+**tests/test_words.py** — Searches app.py, ui.py, static/style.css, the tracecheck and tools code, README, run.bat and config.yaml for the banned words (certified, audit-ready, compliant, ISO, guaranteed, official, saves or saving, and money amounts). It fails if any comes back.
 
 **BUILD_REPORT.md** — The team's summary of steps 4 to 12: each screen and a 90-second demo script, the test result, the flags and precursor statuses each folder gives, what was not verified or was cut, and the final 10-point check.
 
@@ -92,4 +92,4 @@
 
 **docs/DESIGN_NOTES.md** — What changed in Step 14, where the app differs from the mockups and why, what was cut, and what did not work in Streamlit.
 
-**docs/screens/** — Screenshots of all six screens in all three scenarios at 1366x768, named scenario-screen.png.
+**docs/screens/** — Screenshots of all six screens in all three scenarios at 1366x768, named scenario-screen.png, plus the Trace screen at 1024x768 for the clean and trader scenarios and full-length captures of trader Trace.

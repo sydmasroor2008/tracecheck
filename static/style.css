@@ -38,10 +38,8 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 /* ---- top bar ---- */
 .st-key-topbar { align-items: center; gap: 0; padding-bottom: 16px; border-bottom: 1px solid var(--line); flex-wrap: nowrap; justify-content: space-between; }
 .st-key-topbar [data-testid="stElementContainer"], .st-key-topbar [data-testid="stLayoutWrapper"] { width: auto !important; flex: none; }
-.brand { display: flex; align-items: center; gap: 12px; margin-right: 16px; }
-.brand img { width: 38px; height: 38px; display: block; }
-.brand b { display: block; font: 600 15px/1.1 var(--body); letter-spacing: .25em; color: var(--ink); }
-.brand small { display: block; font: 400 10px/1.3 var(--body); letter-spacing: .3em; color: var(--ink-2); margin-top: 3px; }
+.brand { margin-right: 16px; }
+.brand img { width: 40px; height: 40px; display: block; }
 .st-key-navpath { flex-wrap: nowrap; gap: 0; align-items: center; }
 .st-key-navpath [data-testid="stElementContainer"] { width: auto !important; }
 [class*="st-key-nav-"] { width: auto !important; flex: none; }
@@ -202,6 +200,15 @@ button p { margin: 0 !important; }
 hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 .lot-next { font: 400 14px/1.4 var(--body); color: var(--ink); margin-top: 8px; }
 .lot .label { font-size: 11px; }
+[class*="st-key-lotrow-"] { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px 8px 14px; align-items: center; flex-wrap: nowrap; gap: 8px; }
+[class*="st-key-lotrow-"] [data-testid="stElementContainer"]:has(> [data-testid="stHtml"]) { flex: 1 1 0; min-width: 0; width: auto !important; }
+[class*="st-key-lotrow-"] [data-testid="stElementContainer"]:has(button) { flex: none; width: auto !important; }
+[class*="st-key-lotrow-"] button { width: 30px; height: 30px; min-height: 30px; padding: 0; }
+[class*="st-key-lotrow-"] button p { font-size: 13px; transform: translateY(-1px); }
+.lotrow { display: flex; align-items: center; gap: 8px; }
+.lotrow .heat { font: 500 16px/1 var(--mono); margin-right: auto; white-space: nowrap; }
+.lotrow .num { font-size: 18px; letter-spacing: -.01em; white-space: nowrap; }
+[class*="st-key-col-"] [data-testid="stExpander"] { margin-top: 0; }
 [class*="st-key-lot-"] button { min-height: 32px; }
 [class*="st-key-lot-"] button p::before { content: "\2726\00a0\00a0"; }
 
@@ -306,6 +313,19 @@ table.rows td.m { font-family: var(--mono); font-weight: 500; font-variant-numer
 [data-testid="stTextInput"] input, [data-testid="stNumberInput"] input { background: var(--sheet); font-family: var(--mono); }
 [data-testid="stNumberInputContainer"], [data-testid="stTextInputRootElement"] { border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); }
 hr { border-color: var(--line); }
+
+/* ---- narrow windows ---- */
+@media (max-width: 1099px) {
+  .st-key-topbar { flex-wrap: wrap; justify-content: flex-start; row-gap: 12px; }
+  .st-key-topbar [data-testid="stLayoutWrapper"]:has(.st-key-navpath) { flex: 1 0 calc(100% - 64px); }
+  .st-key-navpath { justify-content: flex-start; }
+  [class*="st-key-nav-"]:not([class*="-0"]) button { padding: 0 4px; }
+  [class*="st-key-nav-now"]:not([class*="-0"]) button { padding: 0 4px; }
+  [class*="st-key-nav-"]:not([class*="-0"]) button p { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  h1.title { font-size: 40px; }
+  .ready-card { width: 300px; }
+  .vhead .top { font-size: 16px; }
+}
 
 @keyframes fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes grow { from { flex-grow: 0; } }

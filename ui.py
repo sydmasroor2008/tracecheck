@@ -52,8 +52,7 @@ def logo_uri(path: Path = LOGO) -> str:
 
 
 def brand() -> str:
-    return (f'<div class="brand"><img src="{logo_uri()}" alt="TraceCheck logo">'
-            '<div><b>TRACE</b><small>CHECK AI</small></div></div>')
+    return f'<div class="brand"><img src="{logo_uri()}" alt="TraceCheck"></div>'
 
 
 def num(value) -> str:
@@ -183,6 +182,12 @@ def doc_legend(need: int) -> str:
 
 def small_tip(text: str) -> str:
     return f'<div class="small tipline">{escape(text)}</div>'
+
+
+def lot_row(css_name: str, heat: str, t, mode, full_step: str) -> str:
+    """One-line form of a lot card, for columns with many lots."""
+    return (f'<div class="lotrow" title="{escape(full_step)}"><span class="heat"><span class="dot {css_name}"></span>'
+            f'{escape(str(heat))}</span>{chip(mode)}<span class="num">{tonnes(t if t is not None else "?")}</span></div>')
 
 
 def window(file_name: str, mode: str, image_uri: str, scanning: bool = False) -> str:
