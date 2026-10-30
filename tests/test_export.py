@@ -13,7 +13,7 @@ CFG = data.load_config()
 
 
 def pack(folder, defaults=None):
-    fields = data.load_fields(folder, saved=False)
+    fields = data.load_fields(folder)
     fac = data.build_facility(fields, CFG)
     lot_list = lots(fac)
     flags = checks.run_all(fac, CFG)

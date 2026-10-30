@@ -18,7 +18,7 @@ def test_cached_loads_every_document(folder):
 
 
 def test_low_confidence_fields_need_review():
-    fields = {f["key"]: f for f in data.load_fields("clean", saved=False)}
+    fields = {f["key"]: f for f in data.load_fields("clean")}
     pending = sorted(k for k, f in fields.items() if f["needs_review"])
     assert "stock.count_note" in pending                   # handwritten note
     assert "shipments[2].tonnes" in pending                # under the stamp
@@ -31,7 +31,7 @@ def test_low_confidence_fields_need_review():
 
 
 def test_unapproved_field_is_missing_in_facility_data():
-    fac = data.build_facility(data.load_fields("clean", saved=False), data.load_config())
+    fac = data.build_facility(data.load_fields("clean"), data.load_config())
     assert fac["fuel"][2]["quantity"] is None
     assert "fuel[2].quantity" in fac["_pending"]
     assert fac["fuel"][1]["quantity"] is not None

@@ -163,10 +163,6 @@ button[kind="secondary"] p { font: 600 13px/1 var(--body); color: var(--brand); 
 button p { margin: 0 !important; }
 .st-key-foot { justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: nowrap; }
 .st-key-foot [data-testid="stElementContainer"] { width: auto !important; }
-[class*="st-key-resetmenu"] { width: auto !important; flex: none; margin-left: 6px; }
-[class*="st-key-resetmenu"] button { display: inline-flex; align-items: center; border-color: var(--line); background: var(--sheet); min-height: 34px; height: 34px; padding-top: 0; padding-bottom: 0; }
-[class*="st-key-resetmenu"] button > div, [class*="st-key-resetmenu"] [data-testid="stMarkdownContainer"] { display: flex; align-items: center; }
-[class*="st-key-resetmenu"] button p { color: var(--ink-2); font-weight: 500; white-space: nowrap; }
 .footline { font: 400 12px/1.3 var(--body); color: var(--ink-2); }
 
 /* ---- trace ---- */

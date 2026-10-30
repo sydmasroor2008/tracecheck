@@ -26,7 +26,6 @@ BANNER = "SYNTHETIC DATA · Draft prepared for verifier review · Illustrative, 
 DESIGN_LINE = "AI reads · code calculates · a person approves"
 
 PAGES = ["Overview", "1 Read", "2 Trace", "3 Check", "4 Calculate", "5 Export"]
-WIDGET_PREFIXES = ("default", "edit", "note", "fix", "fixv", "draft")
 FULL_LOT_CARDS = 3   # more lots than this in a verdict column become one-line rows
 SCENARIOS = {"clean": "Clean factory", "problem": "Factory with problems", "trader": "Trader supply chain"}
 
@@ -62,44 +61,36 @@ def scroll_up() -> None:
         st.html(ui.scroll_script(turn), unsafe_allow_javascript=True)
 
 
-def clear_scenario(folder: str) -> None:
-    """Drop everything a rehearsal leaves behind in one scenario, saved or in this session."""
-    data.reset_approvals(folder)
-    data.reset_flag_notes(folder)
-    data.reset_live_choices(folder)
-    st.session_state.setdefault("defaults", {})[folder] = {}
-    for key in list(st.session_state):
-        if key == f"doc-{folder}" or key.startswith(tuple(f"{name}-{folder}-" for name in WIDGET_PREFIXES)):
-            del st.session_state[key]
-    st.session_state.pop("ai_message", None)
-    st.session_state.pop("last_approved", None)
+def demo(folder: str) -> dict:
+    """This browser session's review state for one scenario. Nothing here reaches a file."""
+    return st.session_state.setdefault("demo", {}).setdefault(folder, {"approvals": {}, "notes": {}, "live": []})
 
 
-def fresh_start() -> None:
-    """Back to the first screen, with the reset menu closed."""
-    st.session_state["resets"] = st.session_state.get("resets", 0) + 1
-    go(PAGES[0])
+def approve(folder: str, key: str, value=None, edited: bool = False) -> None:
+    demo(folder)["approvals"][key] = data.approval_entry(value, edited)
 
 
-def reset_demo(folder: str) -> None:
-    clear_scenario(folder)
-    fresh_start()
+def set_live_doc(folder: str, doc: str, on: bool) -> None:
+    state = demo(folder)
+    state["live"] = [d for d in state["live"] if d != doc] + ([doc] if on else [])
 
 
-def reset_all() -> None:
-    for folder in data.FOLDERS:
-        clear_scenario(folder)
-    st.session_state["scenario"] = data.FOLDERS[0]
-    fresh_start()
+def hidden_reset() -> None:
+    """Opening the app with ?reset=1 clears the session, then drops the parameter from the URL."""
+    if st.query_params.get("reset") == "1":
+        st.session_state.clear()
+        del st.query_params["reset"]
+        st.rerun()
 
 
 def load(folder: str) -> dict:
     """Everything a page needs, rebuilt from the folder's files on every run."""
     cfg = data.load_config()
-    fields = data.load_fields(folder)
+    state = demo(folder)
+    fields = data.load_fields(folder, state["approvals"], state["live"])
     fac = data.build_facility(fields, cfg)
     lot_list = lots(fac)
-    flags = apply_notes(run_all(fac, cfg), data.load_flag_notes(folder))
+    flags = apply_notes(run_all(fac, cfg), state["notes"])
     return {"cfg": cfg, "fields": fields, "fac": fac, "lots": lot_list, "flags": flags}
 
 
@@ -129,7 +120,7 @@ def parse_like(original, text: str):
 
 
 def mode_line(folder: str) -> str:
-    live = len(data.live_docs(folder))
+    live = len(demo(folder)["live"])
     return f"CACHED, LIVE for {live} document(s)" if live else "CACHED"
 
 
@@ -243,7 +234,7 @@ def field_review(folder: str, f: dict, i: int) -> None:
             except ValueError:
                 st.error("Please type a number.")
                 return
-            data.save_approval(folder, f["key"], value, edited=edited)
+            approve(folder, f["key"], value, edited=edited)
             st.session_state["last_approved"] = f["key"]
             st.rerun()
 
@@ -270,9 +261,9 @@ def page_documents(folder: str) -> None:
         sheet.html(ui.window(doc["file"], modes, doc_image(str(path))))
         with st.container(horizontal=True, key="aibar"):
             read = st.button("Read with AI", key=f"ai-{folder}-{doc['file']}")
-            if doc["file"] in data.live_docs(folder) and st.button("Use CACHED fields again",
+            if doc["file"] in demo(folder)["live"] and st.button("Use CACHED fields again",
                                                                    key=f"cached-{folder}-{doc['file']}"):
-                data.set_live_doc(folder, doc["file"], False)
+                set_live_doc(folder, doc["file"], False)
                 st.rerun()
             if path.suffix != ".jpg":
                 st.download_button("Open the PDF", path.read_bytes(), file_name=doc["file"], mime="application/pdf")
@@ -280,8 +271,9 @@ def page_documents(folder: str) -> None:
             sheet.html(ui.window(doc["file"], modes, doc_image(str(path)), scanning=True))
             fields_read, message = extract.read_with_ai(folder, doc["file"])
             if fields_read and fields_read[0]["mode"] == "LIVE":
-                data.clear_approvals(folder, [f["key"] for f in fields_read])
-                data.set_live_doc(folder, doc["file"], True)
+                for f in fields_read:
+                    demo(folder)["approvals"].pop(f["key"], None)
+                set_live_doc(folder, doc["file"], True)
             st.session_state["ai_message"] = message
             st.rerun()
         if st.session_state.get("ai_message"):
@@ -292,7 +284,7 @@ def page_documents(folder: str) -> None:
         if len(unapproved) > 1 and st.button("Approve all values on this document as shown",
                                              key=f"approve-all-{folder}-{doc['file']}"):
             for f in unapproved:
-                data.save_approval(folder, f["key"], f["value"])
+                approve(folder, f["key"], f["value"])
             st.rerun()
         for i, f in enumerate(unapproved):
             field_review(folder, f, i)
@@ -308,13 +300,13 @@ def page_documents(folder: str) -> None:
                 typed = st.text_input("Corrected value", value=show(field["value"]), key=f"fixv-{folder}-{key}")
                 if st.button("Apply correction (mode becomes MANUAL)", key=f"fixb-{folder}-{key}"):
                     try:
-                        data.save_approval(folder, key, parse_like(field["value"], typed), edited=True)
+                        approve(folder, key, parse_like(field["value"], typed), edited=True)
                     except ValueError:
                         st.error("Please type a number.")
                     else:
                         st.rerun()
             if st.button("Reset all reviews in this folder"):
-                data.reset_approvals(folder)
+                demo(folder)["approvals"].clear()
                 st.rerun()
         upload_section()
     foot("Next: 2 Trace the steel →", "2 Trace")
@@ -470,7 +462,7 @@ def flag_card(folder: str, f: dict, i: int) -> None:
                 if not note.strip():
                     st.warning("Write a note first: why is this flag accepted?")
                 else:
-                    data.save_flag_note(folder, f["key"], note.strip())
+                    demo(folder)["notes"][f["key"]] = note.strip()
                     st.rerun()
 
 
@@ -590,14 +582,6 @@ RENDER = {
 }
 
 
-def reset_menu(folder: str) -> None:
-    """In the top bar, so it is always in the same place. Choosing an option is the confirmation."""
-    with st.popover("Reset demo", key=f"resetmenu-{st.session_state.get('resets', 0)}"):
-        st.markdown("Clear approvals, typed defaults and accepted flags, and go back to the start?")
-        st.button(f"Yes, reset {SCENARIOS[folder]}", key="reset-one", on_click=reset_demo, args=(folder,))
-        st.button("Yes, reset all scenarios", key="reset-all", on_click=reset_all)
-
-
 def top_bar() -> str:
     """Logo, numbered path and scenario. Returns the chosen folder."""
     query = st.query_params
@@ -614,7 +598,6 @@ def top_bar() -> str:
                 st.button(page.split()[-1], key=f"nav-{state}-{i}", on_click=go, args=(page,))
         folder = st.selectbox("Scenario", list(SCENARIOS), format_func=SCENARIOS.get, key="scenario",
                               label_visibility="collapsed")
-        reset_menu(folder)
         st.html(ui.synth_pill())
     return folder
 
@@ -630,6 +613,7 @@ def foot(next_label: str = None, target: str = None, primary: bool = True) -> No
 def main() -> None:
     st.set_page_config(page_title="TraceCheck", page_icon=str(ui.LOGO), layout="wide",
                        initial_sidebar_state="collapsed")
+    hidden_reset()
     st.html(ui.css())
     folder = top_bar()
     RENDER[st.session_state["page"]](folder)

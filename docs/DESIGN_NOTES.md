@@ -25,7 +25,7 @@
 
 ## Added after the first build
 
-- **Reset demo** sits in the top bar on every screen and asks for confirmation. It offers the current scenario or all scenarios, clears approvals, typed defaults, accepted flags and LIVE choices, and returns to Overview. Saved LIVE readings stay on disk.
+- **No visible reset.** Review state lasts only for the browser session, so a reload starts fresh. `?reset=1` is the hidden reset. An earlier Reset demo menu in the top bar was removed.
 - **Page changes scroll to the top** through a small script in `st.html`, because Streamlit keeps the old scroll position.
 
 ## What was cut

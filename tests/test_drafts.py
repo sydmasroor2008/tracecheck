@@ -17,12 +17,12 @@ class FakeClient:
 
 
 def groups(folder):
-    return drafts.request_groups(lots(data.load_facility(folder, saved=False)))
+    return drafts.request_groups(lots(data.load_facility(folder)))
 
 
 def test_one_request_per_recipient_and_missing_evidence():
     for folder in data.FOLDERS:
-        lot_list = lots(data.load_facility(folder, saved=False))
+        lot_list = lots(data.load_facility(folder))
         asked = [h for g in groups(folder) for h in g["heats"]]
         assert sorted(asked) == sorted(lot["heat"] for lot in lot_list if lot["status"] != "ACTUAL_ALLOWED")
     mill_a = next(g for g in groups("problem") if g["status"] == "DEFAULT_REPORT_PERIOD")

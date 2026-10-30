@@ -1,4 +1,7 @@
-"""Load a demo folder: settings, extracted fields, approvals, and the reviewed facility data.
+"""Load a demo folder: settings, extracted fields, and the reviewed facility data.
+
+Approvals, accepted flags and LIVE choices are not stored here: the app keeps
+them for the browser session and passes them in.
 
 The facility data is a nested dict built only from approved fields. A field
 that is not approved yet is stored as None, so checks and the calculator
@@ -82,34 +85,18 @@ def load_documents(folder: str) -> list:
     return cache.get("documents", [])
 
 
-def live_docs(folder: str) -> list:
-    """Documents whose fields the user chose to take from a LIVE reading (live_use.json)."""
-    return read_json(folder_path(folder) / "live_use.json", [])
+def load_fields(folder: str, approvals: dict = None, live_use: list = ()) -> list:
+    """Cached fields with review state. With no arguments this is the original demo start.
 
-
-def set_live_doc(folder: str, doc: str, on: bool) -> None:
-    docs = [d for d in live_docs(folder) if d != doc] + ([doc] if on else [])
-    write_json(folder_path(folder) / "live_use.json", docs)
-
-
-def clear_approvals(folder: str, keys: list) -> None:
-    path = folder_path(folder) / "approvals.json"
-    approvals = read_json(path, {})
-    write_json(path, {k: v for k, v in approvals.items() if k not in keys})
-
-
-def load_fields(folder: str, saved: bool = True) -> list:
-    """Cached fields with review state. saved=False ignores approvals.json and LIVE choices (demo start).
-
-    For documents listed in live_use.json the saved LIVE fields replace the CACHED ones."""
+    approvals: field key -> approval entry. live_use: documents whose saved LIVE fields replace the CACHED ones."""
     from tracecheck.extract import extract_folder, load_live
 
     threshold = load_config()["review_confidence_threshold"]
-    approvals = read_json(folder_path(folder) / "approvals.json", {}) if saved else {}
+    approvals = approvals or {}
     cached = extract_folder(folder, "CACHED")
-    if saved:
+    if live_use:
         live = load_live(folder)
-        use = [d for d in live_docs(folder) if d in live]
+        use = [d for d in live_use if d in live]
         cached = [f for f in cached if f["source_file"] not in use]
         cached += [f for d in use for f in live[d]["fields"]]
     fields = []
@@ -124,47 +111,13 @@ def load_fields(folder: str, saved: bool = True) -> list:
     return fields
 
 
-def save_approval(folder: str, key: str, value=None, edited: bool = False,
-                  reviewer: str = "reviewer (demo)") -> None:
-    path = folder_path(folder) / "approvals.json"
-    approvals = read_json(path, {})
+def approval_entry(value=None, edited: bool = False, reviewer: str = "reviewer (demo)") -> dict:
     entry = {"approved": True, "reviewer": reviewer,
              "reviewed_at": datetime.datetime.now().isoformat(timespec="seconds")}
     if edited:
         entry["value"] = value
         entry["mode"] = "MANUAL"
-    approvals[key] = entry
-    write_json(path, approvals)
-
-
-def reset_approvals(folder: str) -> None:
-    path = folder_path(folder) / "approvals.json"
-    if path.exists():
-        path.unlink()
-
-
-def load_flag_notes(folder: str) -> dict:
-    return read_json(folder_path(folder) / "flag_notes.json", {})
-
-
-def save_flag_note(folder: str, flag_key: str, note: str) -> None:
-    path = folder_path(folder) / "flag_notes.json"
-    notes = read_json(path, {})
-    notes[flag_key] = note
-    write_json(path, notes)
-
-
-def reset_flag_notes(folder: str) -> None:
-    path = folder_path(folder) / "flag_notes.json"
-    if path.exists():
-        path.unlink()
-
-
-def reset_live_choices(folder: str) -> None:
-    """Back to CACHED fields. Saved LIVE readings stay in live_fields.json."""
-    path = folder_path(folder) / "live_use.json"
-    if path.exists():
-        path.unlink()
+    return entry
 
 
 def build_facility(fields: list, config: dict) -> dict:
@@ -184,8 +137,8 @@ def build_facility(fields: list, config: dict) -> dict:
     return fac
 
 
-def load_facility(folder: str, saved: bool = True) -> dict:
-    return build_facility(load_fields(folder, saved), load_config())
+def load_facility(folder: str) -> dict:
+    return build_facility(load_fields(folder), load_config())
 
 
 def sources_for(fac: dict, *prefixes: str) -> list:

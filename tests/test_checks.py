@@ -10,7 +10,7 @@ CFG = data.load_config()
 
 
 def facility(folder, approve_all=False):
-    fields = data.load_fields(folder, saved=False)
+    fields = data.load_fields(folder)
     if approve_all:
         for f in fields:
             f["approved"] = True

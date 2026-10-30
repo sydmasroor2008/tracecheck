@@ -71,49 +71,43 @@ def test_every_page_ends_with_its_button(app, folder):
         assert labels[-1].endswith("→"), name
 
 
-def fake_saved_state(mod, monkeypatch):
-    cleared = []
-    for name in ("reset_approvals", "reset_flag_notes", "reset_live_choices"):
-        monkeypatch.setattr(mod.data, name, lambda f, name=name: cleared.append((name, f)))
-    mod.st.session_state.update({
-        "defaults": {"clean": {"A0": 1.0}, "trader": {"A0": 2.0}}, "default-clean-A0": 1.0, "default-trader-A0": 2.0,
-        "note-clean-X": "n", "edit-clean-Y": "1", "doc-clean": "PI-A1.pdf", "ai_message": "m",
-        "page": "4 Calculate", "scenario": "trader"})
-    return cleared
-
-
-def test_reset_demo_clears_this_scenario_only(app, monkeypatch):
+def test_review_state_lives_in_the_session_and_never_in_a_file(app, monkeypatch):
     mod, _ = app
-    cleared = fake_saved_state(mod, monkeypatch)
-    mod.reset_demo("clean")
-    state = mod.st.session_state
-    assert {f for _, f in cleared} == {"clean"} and len(cleared) == 3
-    assert state["defaults"] == {"clean": {}, "trader": {"A0": 2.0}}
-    assert "default-trader-A0" in state
-    assert not {"default-clean-A0", "note-clean-X", "edit-clean-Y", "doc-clean", "ai_message"} & set(state)
-    assert state["page"] == "Overview" and state["scenario"] == "trader"
+    monkeypatch.setattr(mod.data, "write_json", lambda *a: pytest.fail("review state written to a file"))
+    field = next(f for f in mod.load("clean")["fields"] if not f["approved"])
+    start = sum(f["approved"] for f in mod.load("clean")["fields"])
+    mod.approve("clean", field["key"], field["value"])
+    mod.demo("clean")["notes"]["X:1"] = "note"
+    mod.set_live_doc("clean", "GI-03.jpg", True)
+    assert sum(f["approved"] for f in mod.load("clean")["fields"]) == start + 1
+    assert mod.demo("trader")["approvals"] == {}
+    mod.st.session_state.clear()      # what a reload or a new tab gives
+    assert sum(f["approved"] for f in mod.load("clean")["fields"]) == start
 
 
-def test_reset_all_clears_every_scenario(app, monkeypatch):
+
+
+def test_hidden_reset_clears_the_session_and_the_parameter(app, monkeypatch):
     mod, _ = app
-    cleared = fake_saved_state(mod, monkeypatch)
-    mod.reset_all()
-    state = mod.st.session_state
-    assert {f for _, f in cleared} == set(mod.data.FOLDERS) and len(cleared) == 9
-    assert state["defaults"] == {"clean": {}, "problem": {}, "trader": {}}
-    assert "default-trader-A0" not in state
-    assert state["page"] == "Overview" and state["scenario"] == "clean"
+
+    class Rerun(Exception):
+        pass
+
+    def rerun():
+        raise Rerun
+    monkeypatch.setattr(mod.st, "rerun", rerun, raising=False)
+    mod.st.session_state.update({"page": "4 Calculate", "demo": {"clean": {"approvals": {"k": {}}}}})
+    mod.st.query_params.update({"reset": "1", "scenario": "trader"})
+    with pytest.raises(Rerun):
+        mod.hidden_reset()
+    assert mod.st.session_state == {}
+    assert mod.st.query_params == {"scenario": "trader"}
 
 
-def test_reset_menu_is_on_every_screen(app):
+def test_no_reset_buttons_in_the_top_bar(app):
     mod, st = app
-    for page in mod.PAGES:
-        mod.st.session_state["page"] = page
-        for folder in mod.data.FOLDERS:
-            mod.st.session_state["scenario"] = folder
-            st.calls.clear()
-            mod.top_bar()
-            assert ("popover", ("Reset demo",)) in st.calls
+    mod.top_bar()
+    assert not any("Reset" in str(args) for _, args in st.calls)
 
 
 def test_going_to_a_page_asks_to_scroll_up(app):

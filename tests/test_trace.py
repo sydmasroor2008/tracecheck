@@ -6,7 +6,7 @@ from tracecheck import data, trace
 
 
 def facility(folder):
-    return data.build_facility(data.load_fields(folder, saved=False), data.load_config())
+    return data.build_facility(data.load_fields(folder), data.load_config())
 
 
 @pytest.mark.parametrize("folder", data.FOLDERS)

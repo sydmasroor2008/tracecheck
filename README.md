@@ -50,7 +50,7 @@ streamlit run app.py
 
 This rebuilds `data/clean`, `data/problem` and `data/trader` from a fixed seed, so the result is the same every time. `python tools\measure_extraction.py clean` compares the cached fields with the ground truth (in CACHED mode this is 100 percent by construction and is not a real accuracy measure).
 
-Review approvals and accepted-flag notes are saved in `data/<folder>/approvals.json` and `flag_notes.json`. Delete them, or use "Reset all reviews in this folder", to start the demo fresh.
+Approvals, typed defaults and accepted flags last only for the current browser session and are never written to a file. Reloading the page or opening a new tab starts from the original state. Opening the app with `?reset=1` in the URL does the same and removes the parameter.
 
 ## What is synthetic
 

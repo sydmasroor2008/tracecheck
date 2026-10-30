@@ -187,10 +187,7 @@ def test_live_fields_feed_the_checks(monkeypatch):
     cert = next(c for c in gt["certificates"] if c["cert_no"] == "MC-A2")
     values = {k: v for k, v in cert.items() if k != "layout"}
     extract.read_with_ai("problem", "MC-A2.pdf", client=FakeClient(json.dumps(wrap(values))))
-    monkeypatch.setattr(data, "live_docs", lambda folder: ["MC-A2.pdf"])
-    monkeypatch.setattr(data, "read_json", lambda path, default=None: default if path.name == "approvals.json"
-                        else extract.read_json(path, default))
-    fields = data.load_fields("problem", saved=True)
+    fields = data.load_fields("problem", live_use=["MC-A2.pdf"])
     live = [f for f in fields if f["source_file"] == "MC-A2.pdf"]
     assert live and all(f["mode"] == "LIVE" for f in live)
     assert not [f for f in fields if f["source_file"] == "MC-A2.pdf" and f["mode"] == "CACHED"]
