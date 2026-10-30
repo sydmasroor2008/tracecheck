@@ -19,6 +19,14 @@ class FakeClient:
         self.models = SimpleNamespace(generate_content=generate_content)
 
 
+class QueueClient:
+    """Returns the given answers in order, one per call."""
+
+    def __init__(self, texts):
+        answers = iter(texts)
+        self.models = SimpleNamespace(generate_content=lambda **kw: SimpleNamespace(text=next(answers)))
+
+
 class BrokenClient:
     def __init__(self):
         def generate_content(**kwargs):
@@ -99,6 +107,27 @@ def test_every_document_type_has_a_live_schema():
     for folder in data.FOLDERS:
         for doc in data.load_documents(folder):
             assert doc["type"] in extract.DOC_SPECS, doc
+
+
+def test_measurement_counts_misreads_and_review():
+    from tools.measure_extraction import compare, read_live, report
+    gt = data.read_json(data.folder_path("problem") / "ground_truth.json")
+    cert = {k: v for k, v in gt["certificates"][2].items() if k != "layout"}
+    cert_answer = wrap(cert)
+    cert_answer["chemistry"]["Mn"] = {"value": 0.20, "confidence": 0.5}     # misread, low confidence
+    cert_answer["tonnes"] = {"value": 4.0, "confidence": 0.97}              # misread, confident
+    docs = [d for d in data.load_documents("problem") if d["file"] in ("GI-01.pdf", "MC-A2.pdf")]
+    answers = {"GI-01.pdf": json.dumps(wrap(GAS)), "MC-A2.pdf": json.dumps(cert_answer)}
+    live = read_live("problem", docs, client=QueueClient([answers[d["file"]] for d in docs]))
+    rows = compare("problem", docs, live)
+    wrong = {r["field"]: r["review"] for r in rows if not r["correct"]}
+    assert wrong == {"chemistry.Mn": True, "tonnes": False}
+    assert sum(r["correct"] for r in rows) == len(rows) - 2
+    text = "\n".join(report("problem", docs, live, rows))
+    assert f"Field accuracy: {len(rows) - 2} / {len(rows)}" in text
+    assert "sent to review: 1; not sent to review (auto-approved): 1" in text
+    replayed = read_live("problem", docs, replay=True)
+    assert compare("problem", docs, replayed) == rows
 
 
 def test_live_fields_feed_the_checks(monkeypatch):
