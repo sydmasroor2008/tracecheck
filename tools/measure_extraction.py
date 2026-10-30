@@ -60,25 +60,66 @@ def field_name(key: str, kind: str) -> str:
     return name.split(".", 1)[1] if extract._list_model_type(kind) else name
 
 
-def read_live(folder: str, docs: list, client=None, replay: bool = False, tries: int = 3) -> dict:
-    """{doc file: LIVE result or None}. Each new result is written to live_fields.json."""
+class QuotaStop(RuntimeError):
+    """The API quota is used up; finished documents are already in live_fields.json."""
+
+
+def quota_kind(text: str) -> str:
+    """'day', 'minute' or '' from a Gemini 429 message."""
+    if "429" not in text and "RESOURCE_EXHAUSTED" not in text:
+        return ""
+    if "PerDay" in text or "per day" in text:
+        return "day"
+    return "minute"
+
+
+def retry_seconds(text: str) -> float:
+    """'retryDelay': '29s' -> 29.0 (the quota message also says 'retry in 18m30.5s')."""
+    m = re.search(r"retryDelay'?\"?:\s*'?\"?(\d+(?:\.\d+)?)s", text)
+    if m:
+        return float(m.group(1))
+    m = re.search(r"retry in (?:(\d+)h)?(?:(\d+)m)?(?:([\d.]+)s)?", text)
+    if m and any(m.groups()):
+        h, mi, s = (float(g or 0) for g in m.groups())
+        return h * 3600 + mi * 60 + s
+    return 60.0
+
+
+def read_live(folder: str, docs: list, client=None, replay: bool = False, resume: bool = False,
+              tries: int = 3, pause: float = 0.0, max_quota_errors: int = 3, sleep=time.sleep) -> dict:
+    """{doc file: LIVE result or None}. Each new result is written to live_fields.json at once.
+
+    resume keeps results already saved with the same model; pause spaces requests (free tier:
+    5 per minute). A per-day quota error, or max_quota_errors 429s in a row, raises QuotaStop."""
     saved = extract.load_live(folder)
     out = {}
+    in_a_row = 0
     for d in docs:
-        if replay:
-            out[d["file"]] = saved.get(d["file"])
+        old = saved.get(d["file"])
+        if replay or (resume and old and old["model"] == extract.model_name()):
+            out[d["file"]] = old
             continue
         client = client or extract.make_client()
+        out[d["file"]] = None
         for attempt in range(tries):
             try:
                 out[d["file"]] = extract.extract_live(folder, d["file"], d["type"], client)
                 extract.save_live(folder, d["file"], out[d["file"]])
+                in_a_row = 0
                 break
             except Exception as exc:  # quota or network: wait and retry, then record the failure
-                print(f"  {d['file']}: attempt {attempt + 1} failed: {str(exc).splitlines()[0][:120]}")
-                out[d["file"]] = None
-                time.sleep(5 * (attempt + 1))
+                text = str(exc)
+                print(f"  {d['file']}: attempt {attempt + 1} failed: {text.splitlines()[0][:100]}")
+                kind = quota_kind(text)
+                if kind:
+                    in_a_row += 1
+                    if kind == "day" or in_a_row >= max_quota_errors:
+                        raise QuotaStop(text)
+                    sleep(retry_seconds(text) + 2)
+                else:
+                    sleep(10 * (attempt + 1))
         print(f"  read {d['file']}: {'ok' if out[d['file']] else 'FAILED'}")
+        sleep(pause)
     return out
 
 
@@ -131,7 +172,9 @@ def table(rows: list, group: str) -> list:
 
 def report(folder: str, docs: list, live: dict, rows: list) -> list:
     results = [r for r in live.values() if r]
-    models = sorted({r["model"] for r in results}) or [extract.model_name()]
+    models = sorted({r["model"] + (f" (served as {r['model_version']})" if r.get("model_version")
+                                   and r["model_version"] != r["model"] else "") for r in results}) \
+        or [extract.model_name()]
     pages = sum(len(extract.page_images(folder_path(folder) / "docs" / d["file"])) for d in docs if live.get(d["file"]))
     correct = sum(r["correct"] for r in rows)
     wrong = [r for r in rows if not r["correct"]]
@@ -141,7 +184,8 @@ def report(folder: str, docs: list, live: dict, rows: list) -> list:
     out = [
         "# LIVE extraction accuracy",
         "",
-        f"- Date: {datetime.date.today().isoformat()}",
+        f"- Date: {datetime.date.today().isoformat()} (documents read "
+        f"{min((r['read_at'] for r in results), default='-')[:10]} to {max((r['read_at'] for r in results), default='-')[:10]})",
         f"- Model: {', '.join(models)}",
         f"- Folder: {folder} (synthetic documents with ground truth)",
         f"- Documents read: {len(results)} of {len(docs)}; pages sent: {pages}; "
@@ -209,13 +253,24 @@ def main() -> None:
     ap.add_argument("--folder", default="clean", choices=data.FOLDERS)
     ap.add_argument("--mode", default="cached", choices=["cached", "live"])
     ap.add_argument("--replay", action="store_true", help="use saved live_fields.json, no API calls")
+    ap.add_argument("--resume", action="store_true", help="keep documents already read today with this model")
+    ap.add_argument("--pause", type=float, default=13.0, help="seconds between requests (free tier: 5 per minute)")
     args = ap.parse_args()
     if args.mode == "cached":
         for kind, (correct, total) in sorted(measure(args.folder).items()):
             print(f"{kind:22s} {correct:4d}/{total:<4d} {pct(correct, total)}  (CACHED mode, not a real accuracy measure)")
         return
     docs = data.load_documents(args.folder)
-    live = read_live(args.folder, docs, replay=args.replay)
+    try:
+        live = read_live(args.folder, docs, replay=args.replay, resume=args.resume, pause=args.pause)
+    except QuotaStop as exc:
+        done = extract.load_live(args.folder)
+        left = [d["file"] for d in docs if d["file"] not in done or done[d["file"]]["model"] != extract.model_name()]
+        print(f"\nStopped: Gemini {quota_kind(str(exc))} quota used up. Full error:\n{exc}\n")
+        print(f"Saved in live_fields.json: {len(docs) - len(left)} of {len(docs)} documents. Not read yet: {', '.join(left)}")
+        print(f"docs/ACCURACY.md was not changed. When the quota resets, run:\n"
+              f"  python tools/measure_extraction.py --folder {args.folder} --mode live --resume")
+        sys.exit(2)
     lines = report(args.folder, docs, live, compare(args.folder, docs, live))
     if PUBLIC.exists() and not args.replay:
         lines += public_samples()

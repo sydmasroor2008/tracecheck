@@ -130,6 +130,57 @@ def test_measurement_counts_misreads_and_review():
     assert compare("problem", docs, replayed) == rows
 
 
+DAY_429 = ("429 RESOURCE_EXHAUSTED. {'error': {'message': 'Generate content requests per day limit exceeded "
+           "on Free Tier.\\nPlease retry in 18m30.5s.', 'details': [{'quotaId': "
+           "'GenerateRequestsPerDayPerProjectPerModel-FreeTier'}, {'retryDelay': '1110s'}]}}")
+MINUTE_429 = ("429 RESOURCE_EXHAUSTED. {'error': {'message': 'Please retry in 29.7s.', 'details': [{'quotaId': "
+              "'GenerateRequestsPerMinutePerProjectPerModel-FreeTier'}, {'retryDelay': '29s'}]}}")
+
+
+class QuotaClient:
+    """Answers the first `ok` calls, then raises the given quota error on every call."""
+
+    def __init__(self, ok, error):
+        self.count = 0
+
+        def generate_content(**kwargs):
+            self.count += 1
+            if self.count > ok:
+                raise RuntimeError(error)
+            return SimpleNamespace(text=json.dumps(wrap(GAS)))
+        self.models = SimpleNamespace(generate_content=generate_content)
+
+
+def test_quota_errors_are_classified():
+    from tools.measure_extraction import quota_kind, retry_seconds
+    assert quota_kind(DAY_429) == "day" and quota_kind(MINUTE_429) == "minute" and quota_kind("timeout") == ""
+    assert retry_seconds(DAY_429) == 1110 and retry_seconds(MINUTE_429) == 29
+    assert retry_seconds("Please retry in 18m30.5s.") == 1110.5
+
+
+def test_day_quota_stops_at_once_and_resume_keeps_finished_documents():
+    from tools.measure_extraction import QuotaStop, read_live
+    docs = [d for d in data.load_documents("clean") if d["type"] == "gas_invoice"][:4]
+    waits = []
+    client = QuotaClient(2, DAY_429)
+    with pytest.raises(QuotaStop, match="per day"):
+        read_live("clean", docs, client=client, sleep=waits.append)
+    assert client.count == 3 and 1110 + 2 not in waits                 # no long wait, no retry
+    assert set(extract.load_live("clean")) == {d["file"] for d in docs[:2]}
+    client = QuotaClient(10, DAY_429)
+    live = read_live("clean", docs, client=client, resume=True, sleep=waits.append)
+    assert client.count == 2 and all(live.values())                    # only the two missing ones read
+
+
+def test_minute_quota_stops_after_three_in_a_row():
+    from tools.measure_extraction import QuotaStop, read_live
+    docs = [d for d in data.load_documents("clean") if d["type"] == "gas_invoice"][:4]
+    waits = []
+    with pytest.raises(QuotaStop):
+        read_live("clean", docs, client=QuotaClient(1, MINUTE_429), sleep=waits.append)
+    assert waits.count(29 + 2) == 2
+
+
 def test_live_fields_feed_the_checks(monkeypatch):
     """The swapped Mn/Cr certificate is still caught when its fields come from LIVE mode."""
     gt = data.read_json(data.folder_path("problem") / "ground_truth.json")

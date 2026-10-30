@@ -257,7 +257,9 @@ def extract_live(folder: str, doc: str, kind: str = None, client=None, path: Pat
     prefix = doc_prefix(folder, doc, kind) if folder else DOC_SPECS[kind][0]
     leaves, valid = parse_live(resp.text or "", kind, prefix)
     read_at = datetime.datetime.now().isoformat(timespec="seconds")
-    return {"model": name, "read_at": read_at, "valid": valid, "kind": kind,
+    served = getattr(resp, "model_version", None)
+    return {"model": name, "model_version": served if isinstance(served, str) else None,
+            "read_at": read_at, "valid": valid, "kind": kind,
             "fields": live_fields(leaves, doc, folder, valid, name, read_at)}
 
 
