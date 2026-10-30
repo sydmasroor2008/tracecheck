@@ -227,6 +227,38 @@ def proof_card(title: str, rows: list, notes: str) -> str:
             f'<p class="small" style="margin:12px 0 0">{escape(notes)}</p></div>')
 
 
+def section(title: str) -> str:
+    return f'<h2 class="cardtitle sect">{escape(title)}</h2>'
+
+
+def result_card(value, mode: str, steps: str) -> str:
+    return (f'<div class="card result"><div class="label">Illustrative, for evidence preparation</div>'
+            f'<div class="num">{num(value)}<span class="t">&nbsp;t CO2 per t of product</span></div>'
+            f'<div class="small" style="margin:8px 0 16px">Extraction mode: {escape(mode)}</div>{steps}</div>')
+
+
+def missing_card(items: list) -> str:
+    rows = "".join(f"<li>{escape(i)}</li>" for i in items)
+    return (f'<div class="card missing"><div class="cardtitle">Input missing</div>'
+            f'<ul class="miss">{rows}</ul><div class="small">No total until these are in. '
+            f"Illustrative, for evidence preparation.</div></div>")
+
+
+def lot_values(rows: str) -> str:
+    return f'<div class="card flat"><div class="label">Value used per lot</div>{rows}</div>'
+
+
+def formula_card() -> str:
+    terms = [("SEE", "specific embedded emissions, t CO2 per t of product"),
+             ("own direct", "the factory's own direct emissions per tonne of product"),
+             ("mi", "tonnes of precursor consumed divided by tonnes of product made"),
+             ("precursor SEE", "from the mill's verification report, or the default value")]
+    rows = "".join(f'<div><span class="mono">{t}</span> · {m}</div>' for t, m in terms)
+    return (f'<div class="card flat"><div class="label">The formula</div>'
+            f'<div class="formula">SEE = own direct + sum of (mi × precursor SEE)</div>'
+            f'<div class="small terms">{rows}</div></div>')
+
+
 def table(columns: list, rows: list, mono: tuple = ()) -> str:
     """rows hold HTML-safe strings; mono: column indexes in the data font."""
     head_row = "".join(f"<th>{escape(c)}</th>" for c in columns)

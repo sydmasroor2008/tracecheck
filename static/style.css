@@ -156,10 +156,10 @@ h1.title { font: 700 52px/1.1 var(--head); letter-spacing: -.025em; color: var(-
 button[kind="primary"], [data-testid="stBaseButton-primary"], [data-testid="stDownloadButton"] button {
   background: var(--brand) !important; border: 0 !important; border-radius: 999px !important; min-height: 46px; padding: 0 22px !important; color: #fff !important; box-shadow: none;
 }
-button[kind="primary"] p, [data-testid="stDownloadButton"] button p { font: 600 15px/1 var(--body); color: #fff; }
+button[kind="primary"] p, [data-testid="stDownloadButton"] button p { font: 600 15px/1 var(--body); color: #fff !important; }
 button[kind="primary"]:hover { background: #0A3B2F !important; }
 button[kind="secondary"], [data-testid="stBaseButton-secondary"] {
-  background: transparent; border: 1px solid var(--brand); border-radius: 999px; color: var(--brand); min-height: 34px;
+  display: inline-flex; align-items: center; background: transparent; border: 1px solid var(--brand); border-radius: 999px; color: var(--brand); min-height: 34px; padding-top: 0; padding-bottom: 0;
 }
 button[kind="secondary"] p { font: 600 13px/1 var(--body); color: var(--brand); }
 button p { margin: 0 !important; }
@@ -211,6 +211,7 @@ hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 [class*="st-key-doc-"] button {
   width: 100%; justify-content: flex-start; border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); min-height: 42px; padding: 0 28px 0 10px; position: relative;
 }
+[class*="st-key-doc-"] button > div { justify-content: flex-start; width: 100%; }
 [class*="st-key-doc-"] button p { font: 500 12px/1.1 var(--mono); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 [class*="st-key-doc-"] button::after {
   content: "\2713"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center;
@@ -224,7 +225,7 @@ hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 .st-key-aibar { gap: 8px; align-items: center; margin-top: 12px; }
 .st-key-aibar [data-testid="stElementContainer"] { width: auto !important; }
 .st-key-aibar [data-testid="stDownloadButton"] button { background: transparent !important; border: 1px solid var(--brand) !important; min-height: 34px; padding: 0 14px !important; }
-.st-key-aibar [data-testid="stDownloadButton"] button p { color: var(--brand); font-size: 13px; }
+.st-key-aibar [data-testid="stDownloadButton"] button p { color: var(--brand) !important; font-size: 13px; }
 .window { background: var(--sheet); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
 .winbar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
 .winbar i { width: 10px; height: 10px; border-radius: 50%; display: block; }
@@ -254,6 +255,7 @@ hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 .flagmsg { font: 400 20px/1.35 var(--body); color: var(--ink); margin-top: 10px; }
 [class*="st-key-chips-"] { gap: 6px; align-items: center; }
 [class*="st-key-chips-"] [data-testid="stElementContainer"] { width: auto !important; }
+[class*="st-key-flag-"] [data-testid="stPopover"] button { min-height: 34px; }
 [class*="st-key-src-"] button { min-height: 28px; height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
 [class*="st-key-src-"] button p { font: 500 12px/1 var(--mono); color: var(--ink); }
 .calm { text-align: center; padding: 48px 24px; }
@@ -271,6 +273,13 @@ hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 .pf .who { font: 400 13px/1.2 var(--body); color: var(--ink-2); margin-top: 6px; }
 .pf .ok { margin-left: auto; width: 44px; height: 44px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; }
 .pf .ok.no { background: var(--problem); }
+.cardtitle.sect { margin: 32px 0 12px; }
+.card.flat { margin-top: 16px; }
+.card.flat .label { margin-bottom: 8px; }
+.card .formula { margin: 8px 0; }
+ul.miss { margin: 12px 0; padding-left: 20px; }
+ul.miss li { font: 400 17px/1.35 var(--body); margin: 4px 0; }
+.st-key-box-defaults { margin-top: 16px; }
 .small { font: 400 13px/1.4 var(--body); color: var(--ink-2); }
 .missing { border-left: 4px solid var(--action); }
 .result .num { font-size: 72px; }
@@ -282,7 +291,7 @@ table.rows td.m { font-family: var(--mono); font-weight: 500; font-variant-numer
 .formula { font: 500 18px/1.4 var(--mono); }
 
 /* ---- export ---- */
-.sheets { list-style: none; margin: 20px 0 8px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
+.sheets { list-style: none; margin: 20px 0 8px; padding: 0 !important; display: grid; grid-template-columns: 1fr 1fr; gap: 0 32px; }
 .sheets li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); font: 500 17px/1.2 var(--body); margin: 0; }
 .sheets .mk { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; background: var(--brand); color: #fff; font: 600 13px/1 var(--body); }
 .sheets li.gap .mk { background: var(--action-tint); color: var(--action-text); }
@@ -295,6 +304,7 @@ table.rows td.m { font-family: var(--mono); font-weight: 500; font-variant-numer
 [data-testid="stExpander"] details { background: transparent; border: 1px solid var(--line); border-radius: 12px; }
 [data-testid="stExpander"] { margin-top: 16px; }
 [data-testid="stTextInput"] input, [data-testid="stNumberInput"] input { background: var(--sheet); font-family: var(--mono); }
+[data-testid="stNumberInputContainer"], [data-testid="stTextInputRootElement"] { border: 1px solid var(--line); border-radius: 10px; background: var(--sheet); }
 hr { border-color: var(--line); }
 
 @keyframes fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

@@ -5,12 +5,14 @@ Works offline in CACHED mode. No login, no internet.
 """
 
 import base64
+import io
 import re
 from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+from openpyxl import load_workbook
 
 import ui
 from tracecheck import data, drafts, extract
@@ -40,7 +42,9 @@ STATUS_ICON = {
     "DEFAULT_NO_EMISSIONS_DATA": "🟡",
     "NO_MILL_LINK": "🔴",
 }
-SEVERITY_ICON = {"high": "🔴", "medium": "🟠", "low": "⚪"}
+CHECKS_RAN = ["Steel mass balance", "Heat numbers link to purchases", "Report covers the production year",
+              "Dates inside the reporting year", "Fuel units agree", "Chemistry in the grade's range",
+              "Values the importer needs"]
 
 
 def go(page: str) -> None:
@@ -116,8 +120,7 @@ def missing_inputs(calc: dict) -> tuple:
     """(inputs that still stop the illustrative result, how many of them are lot default values)."""
     if calc["result"].ok:
         return 0, 0
-    items = re.split(r"; (?![^()]*\))", (calc["result"].missing or "").removeprefix("input missing: "))
-    others = [i for i in items if i and not i.startswith("default value not entered")]
+    others = [i for i in missing_items(calc) if i and not i.startswith("default value not entered")]
     no_default = sum(v["see"] is None for v in calc["lot_values"])
     return no_default + len(others), no_default
 
@@ -384,26 +387,40 @@ def page_trace(folder: str) -> None:
     foot("Next: 3 Check the papers →", "3 Check")
 
 
+def open_doc(folder: str, name: str) -> None:
+    pick_doc(folder, name)
+    go("1 Read")
+
+
+def flag_card(folder: str, f: dict, i: int) -> None:
+    with st.container(key=f"flag-{i}"):
+        st.html(ui.flag_top(f["severity"], f["status"], f["id"]) + ui.flag_message(f["message"]))
+        with st.container(horizontal=True, key=f"chips-{i}"):
+            for j, source in enumerate(f["sources"]):
+                st.button(source, key=f"src-{i}-{j}", on_click=open_doc, args=(folder, source.rsplit(" p.", 1)[0]))
+        if f["status"] != "open":
+            st.html(ui.small_tip(f"Note: {f['note']}"))
+            return
+        with st.popover("Accept with note"):
+            note = st.text_input("Note", key=f"note-{folder}-{f['key']}")
+            if st.button("Accept with note", key=f"accept-{folder}-{f['key']}"):
+                if not note.strip():
+                    st.warning("Write a note first: why is this flag accepted?")
+                else:
+                    data.save_flag_note(folder, f["key"], note.strip())
+                    st.rerun()
+
+
 def page_checks(folder: str) -> None:
     s = load(folder)
-    st.header("Checks")
+    n = sum(f["status"] == "open" for f in s["flags"])
+    title = f"{n} {'thing' if n == 1 else 'things'} to fix" if n else "Nothing to fix"
+    st.html(ui.head("Step 3 · Check the papers", title, f"Checks run on reviewed values. Extraction mode: {mode_line(folder)}"))
     if not s["flags"]:
-        st.success("No flags. Every check passed on the reviewed data.")
-    for f in s["flags"]:
-        with st.container(border=True):
-            st.markdown(f"{SEVERITY_ICON[f['severity']]} **{f['id']}** · {f['severity']} · {f['status']}")
-            st.write(f["message"])
-            st.caption("Sources: " + ", ".join(f["sources"]))
-            if f["status"] == "open":
-                note = st.text_input("Note", key=f"note-{folder}-{f['key']}")
-                if st.button("Accept with note", key=f"accept-{folder}-{f['key']}"):
-                    if not note.strip():
-                        st.warning("Write a note first: why is this flag accepted?")
-                    else:
-                        data.save_flag_note(folder, f["key"], note.strip())
-                        st.rerun()
-            else:
-                st.caption(f"Note: {f['note']}")
+        st.html(ui.calm("All checks passed", CHECKS_RAN))
+    for i, f in enumerate(s["flags"]):
+        flag_card(folder, f, i)
+    foot("Next: 4 Calculate →", "4 Calculate")
 
 
 def oracle_row(label: str, see: float, product: float, consumed: float, published: float) -> dict:
@@ -422,56 +439,81 @@ def oracle_row(label: str, see: float, product: float, consumed: float, publishe
     }
 
 
+def missing_items(calc: dict) -> list:
+    return re.split(r"; (?![^()]*\))", (calc["result"].missing or "").removeprefix("input missing: "))
+
+
 def page_calculation(folder: str) -> None:
     s = load(folder)
-    st.header("Calculation")
-    st.subheader("Proof: the Commission's worked example")
-    st.caption("Commission Guidance No. 5d, Example 3 (screws and nuts from purchased steel rods), "
-               "14 August 2026. Illustrative example values, not default values and not a real factory.")
     rows = [
         oracle_row("Carbon steel screws and nuts", 1.567, 17_000, 20_000, 2.039),
         oracle_row("Stainless screws and nuts", 1.783, 8_200, 10_000, 2.371),
     ]
-    st.table(rows)
-    st.caption("Units: t CO2 per t of product. Gas: 3.5 GJ per t at 56.1 t CO2 per TJ.")
+    matched = all(r["Match"] == "yes" for r in rows)
+    st.html(ui.head("Step 4 · Calculate", "Is the formula right?",
+                    "Then: what is still missing for this factory?"))
+    st.html(ui.proof_card("Our formula matches the Commission's example" if matched
+                          else "Our formula does not match the Commission's example",
+                          [{"label": r["Product"], "ours": r["Our result (intermediates rounded to 3 dp)"],
+                            "theirs": r["Commission's published result"], "match": r["Match"] == "yes"} for r in rows],
+                          "Commission Guidance No. 5d, Example 3 (screws and nuts from purchased steel rods), "
+                          "14 August 2026. Illustrative example values, not default values and not a real factory."))
+    with st.expander("See the full proof"):
+        st.table(rows)
+        st.caption("Units: t CO2 per t of product. Gas: 3.5 GJ per t at 56.1 t CO2 per TJ.")
 
-    st.subheader("Sri Example Fasteners (synthetic)")
+    st.html(ui.section("Sri Example Fasteners (synthetic)"))
+    verdict = st.container()
     defaults = defaults_for(folder)
     need = [lot for lot in s["lots"] if lot["status"] != ACTUAL_ALLOWED]
     if need:
-        st.caption("Default values are not shipped with the app. Look them up and type them here; "
-                   "they are labelled 'entered by user'.")
-        cols = st.columns(min(len(need), 4))
-        for i, lot in enumerate(need):
-            defaults[lot["heat"]] = cols[i % len(cols)].number_input(
-                f"Default for heat {lot['heat']} (t CO2/t), entered by user",
-                value=defaults.get(lot["heat"]), min_value=0.0, format="%.5f",
-                key=f"default-{folder}-{lot['heat']}")
+        with st.container(key="box-defaults"):
+            st.html(ui.small_tip("Default values are not shipped with the app. Look them up and type them here; "
+                                 "they are labelled 'entered by user'."))
+            cols = st.columns(min(len(need), 4))
+            for i, lot in enumerate(need):
+                defaults[lot["heat"]] = cols[i % len(cols)].number_input(
+                    f"Default for heat {lot['heat']} (t CO2/t), entered by user",
+                    value=defaults.get(lot["heat"]), min_value=0.0, format="%.5f",
+                    key=f"default-{folder}-{lot['heat']}")
     out = factory_see(s["fac"], s["lots"], defaults)
-    if out["result"].ok:
-        st.success(f"Specific embedded emissions: {out['result'].value:g} t CO2 per t of product. "
-                   "Illustrative, for evidence preparation.")
-        st.table(pd.DataFrame([{"Step": a, "Value": b, "Unit": c} for a, b, c in out["steps"]]))
-    else:
-        st.error(out["result"].missing)
-    st.dataframe(pd.DataFrame([{
-        "Heat": v["heat"], "Consumed (t)": v["consumed_t"], "Value (t CO2/t)": v["see"],
-        "Basis": v["basis"], "Mode": "MANUAL" if v["basis"].endswith("by user") else "CACHED",
-    } for v in out["lot_values"]]), hide_index=True)
+    with verdict:
+        if out["result"].ok:
+            st.html(ui.result_card(out["result"].value, mode_line(folder),
+                                   ui.table(["Step", "Value", "Unit"], [[a, ui.num(b), c] for a, b, c in out["steps"]], mono=(1,))))
+        else:
+            st.html(ui.missing_card(missing_items(out)))
+    st.html(ui.lot_values(ui.table(["Heat", "Consumed (t)", "Value (t CO2/t)", "Basis", "Mode"], [[
+        v["heat"], ui.num(v["consumed_t"]) if v["consumed_t"] is not None else "—",
+        ui.num(v["see"]) if v["see"] is not None else "input missing",
+        v["basis"] if v["see"] is not None else "default value not entered yet",
+        "—" if v["see"] is None else ui.chip("MANUAL" if v["basis"].endswith("by user") else "CACHED"),
+    ] for v in out["lot_values"]], mono=(0, 1, 2))))
+    st.html(ui.formula_card())
+    foot("Next: 5 Export the pack →", "5 Export")
+
+
+def sheet_status(pack: bytes) -> list:
+    """(sheet name, number of 'input missing' cells) read back from the built workbook."""
+    book = load_workbook(io.BytesIO(pack), read_only=True)
+    return [(ws.title, sum("input missing" in str(cell) for row in ws.iter_rows(values_only=True) for cell in row))
+            for ws in book.worksheets]
 
 
 def page_evidence(folder: str) -> None:
     s = load(folder)
-    st.header("Evidence pack")
-    st.write("An Excel workbook with six sheets: issue register, precursor status, missing documents, "
-             "evidence index, input sheet for the Commission's operator emissions report template, "
-             "and assumptions. Draft prepared for verifier review.")
     defaults = defaults_for(folder)
     calc = factory_see(s["fac"], s["lots"], defaults)
     pack = build_pack(folder, s["fields"], s["fac"], s["flags"], s["lots"], calc, s["cfg"], defaults)
-    st.download_button("Download the evidence pack (Excel)", pack,
-                       file_name=f"tracecheck_evidence_pack_{folder}_SYNTHETIC.xlsx",
-                       mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.html(ui.head("Step 5 · Export", "Download the pack for the verifier",
+                    f"Six sheets, built from reviewed values. Extraction mode: {mode_line(folder)}"))
+    with st.container(key="box-pack"):
+        st.html('<h2 class="cardtitle">Evidence pack for the verifier</h2>' + ui.sheet_list(sheet_status(pack)))
+        st.download_button("Download the evidence pack (Excel)", pack,
+                           file_name=f"tracecheck_evidence_pack_{folder}_SYNTHETIC.xlsx",
+                           mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        st.html(ui.small_tip("Draft prepared for verifier review"))
+    foot()
 
 
 RENDER = {
