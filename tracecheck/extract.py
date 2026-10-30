@@ -25,8 +25,9 @@ from tracecheck.model import (Certificate, DeliveryNote, FuelInvoice, Production
 MODES = ("MANUAL", "CACHED", "LIVE")
 KEY_ENV = "GEMINI_API_KEY"
 MODEL_ENV = "GEMINI_MODEL"
-DEFAULT_MODEL = "gemini-3.8-flash"   # picked from the key's model list on 2026-10-30, see DECISIONS.md
+DEFAULT_MODEL = "gemini-3.5-flash"   # chosen on 2026-10-30 for response time, see DECISIONS.md
 NOT_AVAILABLE = "LIVE mode not available, using CACHED results"
+TIMEOUT_MS = 90_000   # one request; after this the app falls back instead of hanging
 UPLOADS = DATA / "uploads"
 
 
@@ -116,7 +117,8 @@ def make_client():
     if not key:
         raise LiveNotConfigured(f"LIVE mode not configured: set the environment variable {KEY_ENV}.")
     from google import genai
-    return genai.Client(api_key=key)
+    from google.genai import types
+    return genai.Client(api_key=key, http_options=types.HttpOptions(timeout=TIMEOUT_MS))
 
 
 def page_images(path: Path) -> list:

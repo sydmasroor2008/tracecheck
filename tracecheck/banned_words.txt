@@ -1,0 +1,1 @@
+certif(ied|y)|audit-ready|compliant|\bISO\b|guarantee|official|(?<!\.)\bsaves?\b|saving|rupee|₹|€|\bEUR\b|\bINR\b

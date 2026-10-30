@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from tracecheck import data, extract
+from tracecheck import data, drafts, extract
 from tracecheck.calc import mass_ratio, own_direct_per_tonne, specific_embedded_emissions
 from tracecheck.checks import apply_notes, run_all
 from tracecheck.export import build_pack
@@ -224,6 +224,7 @@ def page_trace(folder: str) -> None:
     st.caption("Actual precursor data may be used only if a verification report covers the year the "
                "steel was produced. Otherwise the default value applies.")
     st.dataframe(lot_table(s["lots"]), hide_index=True)
+    request_section(folder, s["lots"])
 
     st.subheader("Shipment → production month → heat → supplier → mill")
     rows = chains(s["fac"], s["lots"])
@@ -234,6 +235,23 @@ def page_trace(folder: str) -> None:
         r["Status"] = f"{STATUS_ICON.get(r['Status'], '🔴')} {r['Status']}"
     st.dataframe(pd.DataFrame(shown), hide_index=True)
     st.caption("Values shown are from CACHED extraction unless read with AI (LIVE) or corrected by hand (MANUAL).")
+
+
+def request_section(folder: str, lot_list: list) -> None:
+    groups = drafts.request_groups(lot_list)
+    if not groups:
+        return
+    st.subheader("Requests for missing evidence")
+    st.caption("The app never sends email. Edit the draft, then copy it into your own email.")
+    for g in groups:
+        key = f"draft-{folder}-{g['to']}-{'-'.join(g['heats'])}"
+        with st.container(border=True):
+            st.markdown(f"**To {g['to']}** · heats {', '.join(g['heats'])} · needed: {g['need']}")
+            if st.button("Draft request", key=f"btn-{key}"):
+                st.session_state[key], st.session_state[f"{key}-label"] = drafts.draft_request(g)
+            if key in st.session_state:
+                st.caption(st.session_state.get(f"{key}-label", ""))
+                st.text_area("AI draft, review before sending", key=key, height=230)
 
 
 def page_checks(folder: str) -> None:
