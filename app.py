@@ -4,29 +4,25 @@ Six pages over one synthetic demo folder (clean, problem or trader).
 Works offline in CACHED mode. No login, no internet.
 """
 
+import re
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
+import ui
 from tracecheck import data, drafts, extract
 from tracecheck.calc import mass_ratio, own_direct_per_tonne, specific_embedded_emissions
 from tracecheck.checks import apply_notes, run_all
 from tracecheck.export import build_pack
 from tracecheck.factory_calc import factory_see
-from tracecheck.trace import ACTUAL_ALLOWED, STATUS_TEXT, chains, lots
+from tracecheck.trace import ACTUAL_ALLOWED, DEFAULT_NO_EMISSIONS_DATA, DEFAULT_REPORT_PERIOD, STATUS_TEXT, chains, lots
 
 BANNER = "SYNTHETIC DATA · Draft prepared for verifier review · Illustrative, for evidence preparation"
 DESIGN_LINE = "AI reads, code calculates, a person approves."
 
-PAGES = [
-    "Dashboard",
-    "Documents and review",
-    "Trace map",
-    "Checks",
-    "Calculation",
-    "Evidence pack",
-]
+PAGES = ["Overview", "1 Read", "2 Trace", "3 Check", "4 Calculate", "5 Export"]
+SCENARIOS = {"clean": "Clean factory", "problem": "Factory with problems", "trader": "Trader supply chain"}
 
 STATUS_ICON = {
     "ACTUAL_ALLOWED": "🟢",
@@ -37,8 +33,8 @@ STATUS_ICON = {
 SEVERITY_ICON = {"high": "🔴", "medium": "🟠", "low": "⚪"}
 
 
-def banner() -> None:
-    st.warning(BANNER)
+def go(page: str) -> None:
+    st.session_state["page"] = page
 
 
 def load(folder: str) -> dict:
@@ -85,29 +81,87 @@ def lot_table(lot_list: list) -> pd.DataFrame:
     } for lot in lot_list])
 
 
-def page_dashboard(folder: str) -> None:
-    s = load(folder)
-    st.header("Dashboard")
-    st.caption(f"Sri Example Fasteners (fictional) · reporting year {s['cfg']['reporting_year']} · "
-               f"demo folder: {folder} · extraction mode: CACHED"
-               + (f", LIVE for {len(data.live_docs(folder))} document(s)" if data.live_docs(folder) else ""))
-    approved = sum(f["approved"] for f in s["fields"])
-    traced = sum(1 for lot in s["lots"] if lot["mill"])
-    cols = st.columns(4)
-    cols[0].metric("Documents", len(data.load_documents(folder)))
-    cols[1].metric("Fields reviewed", f"{approved} / {len(s['fields'])}")
-    cols[2].metric("Lots traced to a mill", f"{traced} / {len(s['lots'])}")
-    cols[3].metric("Issues open", sum(f["status"] == "open" for f in s["flags"]))
+def mode_line(folder: str) -> str:
+    live = len(data.live_docs(folder))
+    return f"CACHED, LIVE for {live} document(s)" if live else "CACHED"
 
-    st.subheader("Precursor status")
-    cols = st.columns(4)
-    for col, status in zip(cols, STATUS_ICON):
-        col.metric(f"{STATUS_ICON[status]} {STATUS_TEXT[status]}",
-                   sum(lot["status"] == status for lot in s["lots"]))
-    pending = s["fac"]["_pending"]
-    if pending:
-        st.info(f"{len(pending)} field(s) await review on the Documents and review page. "
-                "Checks and the calculation treat them as missing until approved.")
+
+def verdict_name(status: str, lot_list: list, year) -> str:
+    if status == ACTUAL_ALLOWED:
+        return "Ready"
+    if status == DEFAULT_REPORT_PERIOD:
+        years = sorted({lot["production_year"] for lot in lot_list if lot["status"] == status and lot["production_year"]})
+        return f"Needs {'/'.join(map(str, years or [year]))} report"
+    return "No mill data" if status == DEFAULT_NO_EMISSIONS_DATA else "Untraced"
+
+
+def consumed(lot_list: list, status: str = None):
+    """Tonnes consumed; a lot whose count awaits review adds nothing yet."""
+    return sum(lot["consumed_t"] or 0 for lot in lot_list if status in (None, lot["status"]))
+
+
+def evidence(s: dict) -> dict:
+    """Readiness figures for the evidence bar, all from the lots of this scenario."""
+    year = s["cfg"]["reporting_year"]
+    total = consumed(s["lots"])
+    ready = consumed(s["lots"], ACTUAL_ALLOWED)
+    bars = [{"css": ui.VERDICT[status][0], "name": verdict_name(status, s["lots"], year),
+             "t": consumed(s["lots"], status)} for status in ui.VERDICT]
+    return {"total": total, "ready": ready, "share": round(100 * ready / total) if total else 0,
+            "bars": [b for b in bars if b["t"] > 0]}
+
+
+def missing_inputs(calc: dict) -> tuple:
+    """(inputs that still stop the illustrative result, how many of them are lot default values)."""
+    if calc["result"].ok:
+        return 0, 0
+    items = re.split(r"; (?![^()]*\))", (calc["result"].missing or "").removeprefix("input missing: "))
+    others = [i for i in items if i and not i.startswith("default value not entered")]
+    no_default = sum(v["see"] is None for v in calc["lot_values"])
+    return no_default + len(others), no_default
+
+
+def page_overview(folder: str) -> None:
+    s = load(folder)
+    docs = data.load_documents(folder)
+    year = s["cfg"]["reporting_year"]
+    pending_docs = {f["source_file"] for f in s["fields"] if not f["approved"]}
+    traced = [lot for lot in s["lots"] if lot["mill"]]
+    mills = {lot["mill"] for lot in traced}
+    untraced = len(s["lots"]) - len(traced)
+    open_flags = sum(f["status"] == "open" for f in s["flags"])
+    missing, no_default = missing_inputs(factory_see(s["fac"], s["lots"], defaults_for(folder)))
+    e = evidence(s)
+
+    st.html(ui.head(f"Overview · Sri Example Fasteners · Reporting year {year}", "How ready is the evidence?"))
+    st.html(ui.hero(e["share"], e["total"], year, e["bars"], mode_line(folder)))
+    st.html(ui.tiles([
+        ui.tile("Documents read", len(docs), "", f"{len(pending_docs)} need a human check" if pending_docs
+                else "All checked by a person", "action" if pending_docs else "ready"),
+        ui.tile("Steel traced", len(s["lots"]), "lots", f"to {len(mills)} mills, no gaps" if not untraced
+                else f"{untraced} lots not linked to a mill", "problem" if untraced else "ready"),
+        ui.tile("Issues", open_flags, "", f"{open_flags} open" if open_flags else "All checks passed",
+                "problem" if open_flags else "ready", alert=open_flags > 0),
+        ui.tile("Evidence pack", missing, "input" if missing == 1 else "inputs",
+                "Ready to export" if not missing else "default values still to enter" if missing == no_default
+                else f"{no_default} default values, {missing - no_default} other", "action" if missing else "ready"),
+    ]))
+    n = len(docs)
+    stages = [
+        {"name": "Documents read", "done": n, "total": n, "text": f"{n} of {n}"},
+        {"name": "Fields approved", "done": n - len(pending_docs), "total": n, "text": f"{n - len(pending_docs)} of {n} docs"},
+        {"name": "Steel traced", "done": len(traced), "total": len(s["lots"]), "text": f"{len(traced)} of {len(s['lots'])} lots"},
+        {"name": "Checks clear", "done": len(s["flags"]) - open_flags, "total": len(s["flags"]), "text": f"{open_flags} issues"},
+        {"name": "Pack ready", "done": 0 if missing else 1, "total": 1,
+         "text": f"{missing} inputs missing" if missing else "ready to export"},
+    ]
+    complete = sum(x["done"] >= x["total"] for x in stages)
+    with st.container(key="box-path"):
+        with st.container(horizontal=True, key="pathhead"):
+            st.html(ui.path_head(complete))
+            st.button("Start: 1 Read the documents →", type="primary", key="start", on_click=go, args=("1 Read",))
+        st.html(ui.path_track(stages))
+    foot()
 
 
 def page_documents(folder: str) -> None:
@@ -345,23 +399,49 @@ def page_evidence(folder: str) -> None:
 
 
 RENDER = {
-    "Dashboard": page_dashboard,
-    "Documents and review": page_documents,
-    "Trace map": page_trace,
-    "Checks": page_checks,
-    "Calculation": page_calculation,
-    "Evidence pack": page_evidence,
+    "Overview": page_overview,
+    "1 Read": page_documents,
+    "2 Trace": page_trace,
+    "3 Check": page_checks,
+    "4 Calculate": page_calculation,
+    "5 Export": page_evidence,
 }
 
 
+def top_bar() -> str:
+    """Logo, numbered path and scenario. Returns the chosen folder."""
+    query = st.query_params
+    if "page" not in st.session_state:
+        st.session_state["page"] = query.get("page") if query.get("page") in PAGES else PAGES[0]
+    if "scenario" not in st.session_state:
+        st.session_state["scenario"] = query.get("scenario") if query.get("scenario") in SCENARIOS else data.FOLDERS[0]
+    now = PAGES.index(st.session_state["page"])
+    with st.container(horizontal=True, key="topbar"):
+        st.html(ui.brand())
+        with st.container(horizontal=True, key="navpath"):
+            for i, page in enumerate(PAGES):
+                state = "now" if i == now else "done" if i < now else "todo"
+                st.button(page.split()[-1], key=f"nav-{state}-{i}", on_click=go, args=(page,))
+        folder = st.selectbox("Scenario", list(SCENARIOS), format_func=SCENARIOS.get, key="scenario",
+                              label_visibility="collapsed")
+        st.html(ui.synth_pill())
+    return folder
+
+
+def foot(next_label: str = None, target: str = None) -> None:
+    """Every screen ends with the honesty line and one button to the next step."""
+    with st.container(horizontal=True, key="foot"):
+        st.html(ui.footline(BANNER))
+        if next_label:
+            st.button(next_label, type="primary", key="next", on_click=go, args=(target,))
+
+
 def main() -> None:
-    st.set_page_config(page_title="TraceCheck", layout="wide")
-    st.sidebar.title("TraceCheck")
-    st.sidebar.caption("SYNTHETIC DATA")
-    folder = st.sidebar.selectbox("Demo folder", data.FOLDERS, index=0)
-    choice = st.sidebar.radio("Page", PAGES)
-    banner()
-    RENDER[choice](folder)
+    st.set_page_config(page_title="TraceCheck", page_icon=str(ui.LOGO), layout="wide",
+                       initial_sidebar_state="collapsed")
+    st.html(ui.css())
+    folder = top_bar()
+    RENDER[st.session_state["page"]](folder)
 
 
 if __name__ == "__main__":

@@ -43,6 +43,7 @@ def app(monkeypatch):
     module = types.ModuleType("streamlit")
     module.__getattr__ = st.__getattr__
     module.session_state = {}
+    module.query_params = {}
     module.sidebar = Stub()
     monkeypatch.setitem(sys.modules, "streamlit", module)
     sys.modules.pop("app", None)
@@ -63,5 +64,5 @@ def test_every_page_renders(app, folder):
 def test_main_shows_banner(app):
     mod, st = app
     mod.main()
-    assert ("warning", (mod.BANNER,)) in st.calls
+    assert any(mod.BANNER in str(a) for name, args in st.calls if name == "html" for a in args)
     assert "SYNTHETIC" in mod.BANNER

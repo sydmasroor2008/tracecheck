@@ -4,6 +4,16 @@ gatherUsageStats = false
 
 [server]
 address = "localhost"
+enableStaticServing = true
 
 [client]
 toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[theme]
+base = "light"
+primaryColor = "#0D4C3C"
+backgroundColor = "#F4F1EB"
+secondaryBackgroundColor = "#FFFDF8"
+textColor = "#222222"
+font = "Inter, system-ui, sans-serif"
