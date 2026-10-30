@@ -19,7 +19,9 @@ HEADER = "Draft prepared for verifier review. Illustrative. Synthetic data."
 MISSING = "input missing"
 
 
-def _sheet(wb, title, columns, rows):
+def _sheet(wb, title, columns, rows, empty=None):
+    """empty: the row to write when there is nothing to list, so no sheet is left blank."""
+    rows = rows or ([[empty]] if empty else [])
     ws = wb.create_sheet(title)
     ws.append([HEADER])
     ws["A1"].font = Font(bold=True, color="9C0006")
@@ -134,15 +136,18 @@ def build_pack(folder: str, fields: list, fac: dict, flags: list, lots: list, ca
     wb = Workbook()
     wb.remove(wb.active)
     _sheet(wb, "1 Issue register", ["Flag", "Severity", "Message", "Sources", "Status", "Note"],
-           [[f["id"], f["severity"], f["message"], f["sources"], f["status"], f["note"]] for f in flags])
+           [[f["id"], f["severity"], f["message"], f["sources"], f["status"], f["note"]] for f in flags],
+           empty="No open issues — all checks passed")
     _sheet(wb, "2 Precursor status",
            ["Heat", "Supplier", "Mill", "Production year", "Consumed t", "Status", "Next action", "Mode"],
            [[lot["heat"], lot["supplier"], lot["mill"], lot["production_year"], lot["consumed_t"],
-             lot["status"], lot["next_action"], lot["mode"]] for lot in lots])
+             lot["status"], lot["next_action"], lot["mode"]] for lot in lots],
+           empty="No steel lots found")
     _sheet(wb, "3 Missing documents", ["Item", "What is missing", "What to ask for"],
-           missing_documents(flags, lots, fac))
+           missing_documents(flags, lots, fac), empty="Nothing missing")
     _sheet(wb, "4 Evidence index", ["Field", "Key", "Value", "Unit", "Source file", "Page", "Mode",
-                                    "Confidence", "Reviewer", "Reviewed at"], evidence_rows(fields, defaults))
+                                    "Confidence", "Reviewer", "Reviewed at"], evidence_rows(fields, defaults),
+           empty="No approved numbers yet")
     _sheet(wb, "5 Input sheet", ["Section", "Field", "Value", "Unit", "From"], input_rows(fac, lots, calc))
     assumptions = [
         ["Demo folder", folder],

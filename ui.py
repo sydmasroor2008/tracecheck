@@ -133,6 +133,14 @@ def path_track(stages: list) -> str:
     return '<div class="track">' + "".join(out) + "</div>"
 
 
+def scroll_script(turn: int) -> str:
+    """Runs once per page change; the turn number makes Streamlit treat it as new."""
+    return (f"<script>/* {turn} */ (() => {{ const up = () => {{"
+            "const main = document.querySelector('[data-testid=\"stMain\"]');"
+            "if (main) main.scrollTo(0, 0); window.scrollTo(0, 0); };"
+            "up(); setTimeout(up, 100); setTimeout(up, 400); })();</script>")
+
+
 def footline(text: str) -> str:
     return f'<div class="footline">{escape(text)}</div>'
 

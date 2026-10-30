@@ -50,6 +50,26 @@ CHECKS_RAN = ["Steel mass balance", "Heat numbers link to purchases", "Report co
 
 def go(page: str) -> None:
     st.session_state["page"] = page
+    st.session_state["scroll"] = st.session_state.get("scroll", 0) + 1
+
+
+def scroll_up() -> None:
+    """After a page change, put the new page at the top. Streamlit keeps the old scroll position."""
+    turn = st.session_state.get("scroll", 0)
+    if turn != st.session_state.get("scrolled", 0):
+        st.session_state["scrolled"] = turn
+        st.html(ui.scroll_script(turn), unsafe_allow_javascript=True)
+
+
+def reset_demo(folder: str) -> None:
+    """Clear this scenario's approvals, accepted flags and typed defaults, for a fresh rehearsal."""
+    data.reset_approvals(folder)
+    data.reset_flag_notes(folder)
+    st.session_state.setdefault("defaults", {})[folder] = {}
+    for key in list(st.session_state):
+        if key.startswith((f"default-{folder}-", f"edit-{folder}-", f"note-{folder}-", f"fixv-{folder}-")):
+            del st.session_state[key]
+    st.session_state.pop(f"doc-{folder}", None)
 
 
 def load(folder: str) -> dict:
@@ -166,7 +186,11 @@ def page_overview(folder: str) -> None:
             st.html(ui.path_head(complete))
             st.button("Start: 1 Read the documents →", type="primary", key="start", on_click=go, args=("1 Read",))
         st.html(ui.path_track(stages))
-    foot()
+    with st.container(horizontal=True, key="foot"):
+        st.html(ui.footline(BANNER))
+        with st.popover("Reset demo"):
+            st.markdown(f"Clear approvals, typed defaults and accepted flags for **{SCENARIOS[folder]}**?")
+            st.button("Yes, reset", key="reset-yes", on_click=reset_demo, args=(folder,))
 
 
 @lru_cache(maxsize=64)
@@ -583,6 +607,7 @@ def main() -> None:
     st.html(ui.css())
     folder = top_bar()
     RENDER[st.session_state["page"]](folder)
+    scroll_up()
 
 
 if __name__ == "__main__":

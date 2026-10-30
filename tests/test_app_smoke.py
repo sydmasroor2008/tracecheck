@@ -67,8 +67,32 @@ def test_every_page_ends_with_its_button(app, folder):
     for name, page in mod.RENDER.items():
         st.calls.clear()
         page(folder)
-        labels = [args[0] for call, args in st.calls if call == "button"]
+        labels = [args[0] for call, args in st.calls if call == "button" and args[0] != "Yes, reset"]
         assert labels[-1].endswith("→"), name
+
+
+def test_reset_demo_clears_this_scenario_only(app, monkeypatch):
+    mod, _ = app
+    cleared = []
+    monkeypatch.setattr(mod.data, "reset_approvals", lambda f: cleared.append(("approvals", f)))
+    monkeypatch.setattr(mod.data, "reset_flag_notes", lambda f: cleared.append(("notes", f)))
+    state = mod.st.session_state
+    state.update({"defaults": {"clean": {"A0": 1.0}, "trader": {"A0": 2.0}}, "default-clean-A0": 1.0,
+                  "default-trader-A0": 2.0, "note-clean-X": "n", "edit-clean-Y": "1"})
+    mod.reset_demo("clean")
+    assert cleared == [("approvals", "clean"), ("notes", "clean")]
+    assert state["defaults"] == {"clean": {}, "trader": {"A0": 2.0}}
+    assert set(state) == {"defaults", "default-trader-A0"}
+
+
+def test_going_to_a_page_asks_to_scroll_up(app):
+    mod, st = app
+    mod.go("2 Trace")
+    mod.scroll_up()
+    assert any(name == "html" and "scrollTo" in str(args) for name, args in st.calls)
+    st.calls.clear()
+    mod.scroll_up()
+    assert not any(name == "html" for name, _ in st.calls)
 
 
 def test_main_shows_banner(app):

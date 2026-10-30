@@ -55,3 +55,21 @@ def test_problem_issue_register_and_input_missing():
 def test_precursor_status_sheet_lists_all_lots():
     heats = [r[0].value for r in pack("clean")["2 Precursor status"].iter_rows(min_row=3)]
     assert heats == ["A0", "A1", "A2", "A3", "B1", "B2"]
+
+
+@pytest.mark.parametrize("folder", data.FOLDERS)
+def test_every_sheet_has_a_data_row(folder):
+    for ws in pack(folder).worksheets:
+        assert any(cell.value not in (None, "") for row in ws.iter_rows(min_row=3) for cell in row), ws.title
+
+
+def test_empty_issue_register_says_so():
+    assert pack("clean")["1 Issue register"]["A3"].value == "No open issues — all checks passed"
+
+
+def test_empty_sheets_keep_their_own_message():
+    fac = {"_pending": [], "_sources": {}}
+    wb = load_workbook(io.BytesIO(export.build_pack("clean", [], fac, [], [], factory_see(fac, []), CFG)))
+    assert wb["2 Precursor status"]["A3"].value == "No steel lots found"
+    assert wb["3 Missing documents"]["A3"].value == "Nothing missing"
+    assert wb["4 Evidence index"]["A3"].value == "No approved numbers yet"

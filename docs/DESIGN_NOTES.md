@@ -23,6 +23,11 @@
 - **The "Try Factory with problems" hint is left out** of the empty Untraced column. No scenario has an untraced lot, so it would point nowhere.
 - **The full line "Draft prepared for verifier review" sits in the footer of every screen.** The top pill keeps the shorter mockup wording.
 
+## Added after the first build
+
+- **Reset demo** sits at the bottom of Overview and asks for confirmation. It clears approvals, typed defaults and accepted flags for the current scenario only. LIVE document choices stay.
+- **Page changes scroll to the top** through a small script in `st.html`, because Streamlit keeps the old scroll position.
+
 ## What was cut
 
 - The optional Shipment → Month → Heat → Mill box diagram. The shipment table stays, in an expander on 2 Trace.

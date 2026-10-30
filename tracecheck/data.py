@@ -154,6 +154,12 @@ def save_flag_note(folder: str, flag_key: str, note: str) -> None:
     write_json(path, notes)
 
 
+def reset_flag_notes(folder: str) -> None:
+    path = folder_path(folder) / "flag_notes.json"
+    if path.exists():
+        path.unlink()
+
+
 def build_facility(fields: list, config: dict) -> dict:
     """Nested facility data from approved fields; unapproved values become None."""
     fac = {}

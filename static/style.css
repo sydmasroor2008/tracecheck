@@ -163,6 +163,9 @@ button[kind="secondary"] p { font: 600 13px/1 var(--body); color: var(--brand); 
 button p { margin: 0 !important; }
 .st-key-foot { justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: nowrap; }
 .st-key-foot [data-testid="stElementContainer"] { width: auto !important; }
+.st-key-foot [data-testid="stPopover"] { width: auto; }
+.st-key-foot [data-testid="stPopover"] button { border-color: var(--line); }
+.st-key-foot [data-testid="stPopover"] button p { color: var(--ink-2); font-weight: 500; }
 .footline { font: 400 12px/1.3 var(--body); color: var(--ink-2); }
 
 /* ---- trace ---- */
