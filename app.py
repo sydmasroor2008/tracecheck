@@ -26,6 +26,7 @@ BANNER = "SYNTHETIC DATA · Draft prepared for verifier review · Illustrative, 
 DESIGN_LINE = "AI reads · code calculates · a person approves"
 
 PAGES = ["Overview", "1 Read", "2 Trace", "3 Check", "4 Calculate", "5 Export"]
+WIDGET_PREFIXES = ("default", "edit", "note", "fix", "fixv", "draft")
 FULL_LOT_CARDS = 3   # more lots than this in a verdict column become one-line rows
 SCENARIOS = {"clean": "Clean factory", "problem": "Factory with problems", "trader": "Trader supply chain"}
 
@@ -61,15 +62,35 @@ def scroll_up() -> None:
         st.html(ui.scroll_script(turn), unsafe_allow_javascript=True)
 
 
-def reset_demo(folder: str) -> None:
-    """Clear this scenario's approvals, accepted flags and typed defaults, for a fresh rehearsal."""
+def clear_scenario(folder: str) -> None:
+    """Drop everything a rehearsal leaves behind in one scenario, saved or in this session."""
     data.reset_approvals(folder)
     data.reset_flag_notes(folder)
+    data.reset_live_choices(folder)
     st.session_state.setdefault("defaults", {})[folder] = {}
     for key in list(st.session_state):
-        if key.startswith((f"default-{folder}-", f"edit-{folder}-", f"note-{folder}-", f"fixv-{folder}-")):
+        if key == f"doc-{folder}" or key.startswith(tuple(f"{name}-{folder}-" for name in WIDGET_PREFIXES)):
             del st.session_state[key]
-    st.session_state.pop(f"doc-{folder}", None)
+    st.session_state.pop("ai_message", None)
+    st.session_state.pop("last_approved", None)
+
+
+def fresh_start() -> None:
+    """Back to the first screen, with the reset menu closed."""
+    st.session_state["resets"] = st.session_state.get("resets", 0) + 1
+    go(PAGES[0])
+
+
+def reset_demo(folder: str) -> None:
+    clear_scenario(folder)
+    fresh_start()
+
+
+def reset_all() -> None:
+    for folder in data.FOLDERS:
+        clear_scenario(folder)
+    st.session_state["scenario"] = data.FOLDERS[0]
+    fresh_start()
 
 
 def load(folder: str) -> dict:
@@ -186,11 +207,7 @@ def page_overview(folder: str) -> None:
             st.html(ui.path_head(complete))
             st.button("Start: 1 Read the documents →", type="primary", key="start", on_click=go, args=("1 Read",))
         st.html(ui.path_track(stages))
-    with st.container(horizontal=True, key="foot"):
-        st.html(ui.footline(BANNER))
-        with st.popover("Reset demo"):
-            st.markdown(f"Clear approvals, typed defaults and accepted flags for **{SCENARIOS[folder]}**?")
-            st.button("Yes, reset", key="reset-yes", on_click=reset_demo, args=(folder,))
+    foot()
 
 
 @lru_cache(maxsize=64)
@@ -529,7 +546,7 @@ def page_calculation(folder: str) -> None:
             st.html(ui.result_card(out["result"].value, mode_line(folder) + typed,
                                    ui.table(["Step", "Value", "Unit"], [[a, ui.num(b), c] for a, b, c in out["steps"]], mono=(1,))))
         else:
-            st.html(ui.missing_card(missing_items(out)))
+            st.html(ui.missing_card(missing_items(out), mode_line(folder)))
     st.html(ui.lot_values(ui.table(["Heat", "Consumed (t)", "Value (t CO2/t)", "Basis", "Mode"], [[
         v["heat"], ui.num(v["consumed_t"]) if v["consumed_t"] is not None else "—",
         ui.num(v["see"]) if v["see"] is not None else "input missing",
@@ -573,6 +590,14 @@ RENDER = {
 }
 
 
+def reset_menu(folder: str) -> None:
+    """In the top bar, so it is always in the same place. Choosing an option is the confirmation."""
+    with st.popover("Reset demo", key=f"resetmenu-{st.session_state.get('resets', 0)}"):
+        st.markdown("Clear approvals, typed defaults and accepted flags, and go back to the start?")
+        st.button(f"Yes, reset {SCENARIOS[folder]}", key="reset-one", on_click=reset_demo, args=(folder,))
+        st.button("Yes, reset all scenarios", key="reset-all", on_click=reset_all)
+
+
 def top_bar() -> str:
     """Logo, numbered path and scenario. Returns the chosen folder."""
     query = st.query_params
@@ -589,6 +614,7 @@ def top_bar() -> str:
                 st.button(page.split()[-1], key=f"nav-{state}-{i}", on_click=go, args=(page,))
         folder = st.selectbox("Scenario", list(SCENARIOS), format_func=SCENARIOS.get, key="scenario",
                               label_visibility="collapsed")
+        reset_menu(folder)
         st.html(ui.synth_pill())
     return folder
 

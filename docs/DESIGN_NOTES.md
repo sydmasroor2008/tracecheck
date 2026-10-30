@@ -18,14 +18,14 @@
 - **Verdict columns with more than 3 lots** show the rest as one-line rows, with their full cards under Show all. Rows keep a mode chip, because the plan requires the mode next to values.
 - **Below 1100 px** the step labels hide (Overview keeps its word, as it has no number), the Scenario selector and pill move to a second row, and all screen titles drop to 40 px.
 - **Export ends with a quiet "Back to Overview →"** as it has no next step. **Overview ends with the Start button** in its last tile, as in the mockup.
-- **The Scenario selector is wider** (244 px) so "Factory with problems" fits.
+- **The Scenario selector is wider** (236 px) so "Factory with problems" fits.
 - **Lot cards carry a mode chip** (CACHED / LIVE / MANUAL), which the mockup lacks but the plan's hard limits require.
 - **The "Try Factory with problems" hint is left out** of the empty Untraced column. No scenario has an untraced lot, so it would point nowhere.
 - **The full line "Draft prepared for verifier review" sits in the footer of every screen.** The top pill keeps the shorter mockup wording.
 
 ## Added after the first build
 
-- **Reset demo** sits at the bottom of Overview and asks for confirmation. It clears approvals, typed defaults and accepted flags for the current scenario only. LIVE document choices stay.
+- **Reset demo** sits in the top bar on every screen and asks for confirmation. It offers the current scenario or all scenarios, clears approvals, typed defaults, accepted flags and LIVE choices, and returns to Overview. Saved LIVE readings stay on disk.
 - **Page changes scroll to the top** through a small script in `st.html`, because Streamlit keeps the old scroll position.
 
 ## What was cut

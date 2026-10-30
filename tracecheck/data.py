@@ -160,6 +160,13 @@ def reset_flag_notes(folder: str) -> None:
         path.unlink()
 
 
+def reset_live_choices(folder: str) -> None:
+    """Back to CACHED fields. Saved LIVE readings stay in live_fields.json."""
+    path = folder_path(folder) / "live_use.json"
+    if path.exists():
+        path.unlink()
+
+
 def build_facility(fields: list, config: dict) -> dict:
     """Nested facility data from approved fields; unapproved values become None."""
     fac = {}

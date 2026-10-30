@@ -36,9 +36,9 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 [data-testid="stHtml"] { line-height: 1.4; }
 
 /* ---- top bar ---- */
-.st-key-topbar { align-items: center; gap: 0; padding-bottom: 16px; border-bottom: 1px solid var(--line); flex-wrap: nowrap; justify-content: space-between; }
+.st-key-topbar { align-items: center; gap: 0; row-gap: 10px; padding-bottom: 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; justify-content: space-between; }
 .st-key-topbar [data-testid="stElementContainer"], .st-key-topbar [data-testid="stLayoutWrapper"] { width: auto !important; flex: none; }
-.brand { margin-right: 16px; }
+.brand { margin-right: 8px; }
 .brand img { width: 40px; height: 40px; display: block; }
 .st-key-navpath { flex-wrap: nowrap; gap: 0; align-items: center; }
 .st-key-navpath [data-testid="stElementContainer"] { width: auto !important; }
@@ -51,9 +51,9 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 [class*="st-key-nav-"] button > div, [class*="st-key-nav-"] [data-testid="stMarkdownContainer"] { display: flex; align-items: center; height: 100%; margin: 0; }
 [class*="st-key-nav-"] button:hover p { color: var(--brand) !important; }
 [class*="st-key-nav-"]:not(:first-child)::before {  /* thin line between steps */
-  content: ""; position: absolute; left: -11px; top: 50%; width: 18px; height: 2px; background: var(--line);
+  content: ""; position: absolute; left: -9px; top: 50%; width: 14px; height: 2px; background: var(--line);
 }
-[class*="st-key-nav-"] { position: relative; margin-left: 15px; }
+[class*="st-key-nav-"] { position: relative; margin-left: 12px; }
 [class*="st-key-nav-"]:first-child { margin-left: 0; }
 [class*="st-key-nav-done"]:not(:first-child)::before, [class*="st-key-nav-now"]:not(:first-child)::before { background: var(--brand); }
 [class*="st-key-nav-"] button::before {
@@ -72,7 +72,7 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 [class*="st-key-nav-now"] button p { color: #fff !important; font-weight: 600; }
 [class*="st-key-nav-now"] button::before { background: #fff; border-color: #fff; color: var(--brand); }
 
-.st-key-scenario { width: 244px !important; flex: none; }
+.st-key-scenario { width: 236px !important; flex: none; }
 .st-key-scenario [role="group"] {
   background: var(--sheet); border: 1px solid var(--line); border-radius: 999px; min-height: 34px; height: 34px; box-shadow: none; position: relative;
 }
@@ -81,7 +81,7 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 }
 .st-key-scenario input { font: 600 13px/1 var(--body) !important; color: var(--ink); padding: 0 0 0 72px !important; height: 32px; min-height: 0; background: transparent; }
 .st-key-scenario [data-testid="stWidgetLabel"] { display: none; }
-.synth { font: 500 12px/1 var(--body); background: #E6E2D9; color: var(--ink-2); padding: 11px 12px; border-radius: 999px; white-space: nowrap; margin-left: 10px; display: block; }
+.synth { font: 500 12px/1 var(--body); background: #E6E2D9; color: var(--ink-2); padding: 11px 12px; border-radius: 999px; white-space: nowrap; margin-left: 6px; display: block; }
 
 /* ---- type ---- */
 .eyebrow { font: 600 13px/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
@@ -163,9 +163,10 @@ button[kind="secondary"] p { font: 600 13px/1 var(--body); color: var(--brand); 
 button p { margin: 0 !important; }
 .st-key-foot { justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: nowrap; }
 .st-key-foot [data-testid="stElementContainer"] { width: auto !important; }
-.st-key-foot [data-testid="stPopover"] { width: auto; }
-.st-key-foot [data-testid="stPopover"] button { border-color: var(--line); }
-.st-key-foot [data-testid="stPopover"] button p { color: var(--ink-2); font-weight: 500; }
+[class*="st-key-resetmenu"] { width: auto !important; flex: none; margin-left: 6px; }
+[class*="st-key-resetmenu"] button { display: inline-flex; align-items: center; border-color: var(--line); background: var(--sheet); min-height: 34px; height: 34px; padding-top: 0; padding-bottom: 0; }
+[class*="st-key-resetmenu"] button > div, [class*="st-key-resetmenu"] [data-testid="stMarkdownContainer"] { display: flex; align-items: center; }
+[class*="st-key-resetmenu"] button p { color: var(--ink-2); font-weight: 500; white-space: nowrap; }
 .footline { font: 400 12px/1.3 var(--body); color: var(--ink-2); }
 
 /* ---- trace ---- */

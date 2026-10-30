@@ -250,11 +250,11 @@ def result_card(value, mode: str, steps: str) -> str:
             f'<div class="small" style="margin:8px 0 16px">Extraction mode: {escape(mode)}</div>{steps}</div>')
 
 
-def missing_card(items: list) -> str:
+def missing_card(items: list, mode: str) -> str:
     rows = "".join(f"<li>{escape(i)}</li>" for i in items)
     return (f'<div class="card missing"><div class="cardtitle">Input missing</div>'
             f'<ul class="miss">{rows}</ul><div class="small">No total until these are in. '
-            f"Illustrative, for evidence preparation.</div></div>")
+            f"Illustrative, for evidence preparation. Extraction mode: {escape(mode)}</div></div>")
 
 
 def lot_values(rows: str) -> str:
