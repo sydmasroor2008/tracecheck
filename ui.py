@@ -103,7 +103,7 @@ def tiles(items: list) -> str:
 
 def ring(done: int, total: int, index: int) -> str:
     """The stage circle: filled when complete, a partial ring otherwise."""
-    if total and done >= total:
+    if done >= total:
         return f'<span class="ring full">{check_mark(22)}</span>'
     r, length = 19, 2 * 3.14159 * 19
     part = length * (done / total if total else 0)
@@ -128,7 +128,7 @@ def path_track(stages: list) -> str:
     """stages: list of dicts with name, done, total, text."""
     out = []
     for i, s in enumerate(stages, 1):
-        complete = s["total"] > 0 and s["done"] >= s["total"]
+        complete = s["done"] >= s["total"]
         out.append(f'<div class="stage{" done" if complete else ""}">{ring(s["done"], s["total"], i)}'
                    f'<b>{escape(s["name"])}</b><small>{escape(s["text"])}</small></div>')
     return '<div class="track">' + "".join(out) + "</div>"
@@ -166,8 +166,8 @@ def empty_card(line: str, hint: str = "") -> str:
 def lot_card(css_name: str, heat: str, t, mill: str, sub: str, mode, step: str, full_step: str) -> str:
     return (f'<div class="lot"><div class="lot-top"><span class="heat"><span class="dot {css_name}"></span>{escape(str(heat))}</span>'
             f'<span class="num">{tonnes(t if t is not None else "?")}</span></div>'
-            f'<div class="lot-mill">{escape(mill)}</div>'
-            f'<div class="lot-sub"><span>{escape(sub)}</span>{chip(mode)}</div><hr class="rule">'
+            f'<div class="lot-mill"><span>{escape(mill)}</span>{chip(mode)}</div>'
+            f'<div class="lot-sub">{escape(sub)}</div><hr class="rule">'
             f'<div class="label">Next step</div><div class="lot-next" title="{escape(full_step)}">{escape(step)}</div></div>')
 
 

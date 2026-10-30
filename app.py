@@ -72,15 +72,6 @@ def parse_like(original, text: str):
     return text
 
 
-def lot_table(lot_list: list) -> pd.DataFrame:
-    return pd.DataFrame([{
-        "Status": f"{STATUS_ICON[lot['status']]} {STATUS_TEXT[lot['status']]}",
-        "Heat": lot["heat"], "Supplier": lot["supplier"], "Mill": lot["mill"] or "—",
-        "Produced": lot["production_year"], "Consumed (t)": lot["consumed_t"],
-        "Next action": lot["next_action"], "Mode": lot["mode"],
-    } for lot in lot_list])
-
-
 def mode_line(folder: str) -> str:
     live = len(data.live_docs(folder))
     return f"CACHED, LIVE for {live} document(s)" if live else "CACHED"
@@ -271,41 +262,94 @@ def upload_section() -> None:
                 } for f in fields]), hide_index=True)
 
 
+def short_name(name: str) -> str:
+    return (name or "").replace(", synthetic", "")
+
+
+def mill_tag(name: str) -> str:
+    return short_name(name).replace("Example Steel ", "")
+
+
+def lot_line(lot: dict) -> str:
+    """The small line on a lot card, for example 'Made 2025 · opening stock'."""
+    bits = [f"via {short_name(lot['supplier'])}" if lot["supplier"] != lot["mill"] and lot["kind"] == "purchase"
+            else f"Made {lot['production_year'] or 'year unknown'}"]
+    if lot["kind"] == "opening stock":
+        bits.append("opening stock")
+    left = (lot["tonnes"] or 0) - (lot["consumed_t"] or 0) if lot["consumed_t"] is not None else 0
+    if left > 0:
+        bits.append(f"{ui.num(left)} t still in stock")
+    return " · ".join(bits)
+
+
+def lot_step(lot: dict) -> str:
+    """Short form of the next action from trace.py; the card's hover text keeps the full sentence."""
+    mill, year = mill_tag(lot["mill"]), lot["production_year"]
+    if lot["status"] == ACTUAL_ALLOWED:
+        return f"Keep the {year} verification report in the pack."
+    if lot["status"] == DEFAULT_REPORT_PERIOD:
+        return f"Ask {mill} for a report covering {year or 'the production year'}."
+    if lot["status"] == DEFAULT_NO_EMISSIONS_DATA:
+        through = ", through the trader," if lot["supplier"] != lot["mill"] and lot["kind"] == "purchase" else ""
+        return f"Ask {mill}{through} for verified data."
+    return lot["next_action"]
+
+
+def open_draft(folder: str, g: dict) -> None:
+    key = f"draft-{folder}-{g['to']}-{'-'.join(g['heats'])}"
+
+    def body() -> None:
+        st.markdown(f"**Heats {', '.join(g['heats'])}** · needed: {g['need']}")
+        if key not in st.session_state:
+            with st.spinner("Drafting…"):
+                st.session_state[key], st.session_state[f"{key}-label"] = drafts.draft_request(g)
+        st.caption(st.session_state.get(f"{key}-label", ""))
+        st.text_area("AI draft, review before sending", key=key, height=260)
+        st.caption("The app never sends email. Edit the draft, then copy it into your own email.")
+
+    st.dialog(f"Request to {short_name(g['to'])}", width="large")(body)()
+
+
+def lot_cards(folder: str, status: str, lot_list: list, groups: list) -> None:
+    name = ui.VERDICT[status][0]
+    for lot in lot_list:
+        with st.container(key=f"lot-{lot['heat']}"):
+            st.html(ui.lot_card(name, lot["heat"], lot["consumed_t"], short_name(lot["mill"]) or "Mill not known",
+                                lot_line(lot), lot["mode"], lot_step(lot), lot["next_action"]))
+            group = next((g for g in groups if lot["heat"] in g["heats"]), None)
+            if status != ACTUAL_ALLOWED and group and st.button("Draft request with AI", key=f"ask-{lot['heat']}"):
+                open_draft(folder, group)
+
+
 def page_trace(folder: str) -> None:
     s = load(folder)
-    st.header("Trace map")
-    st.subheader("Precursor status, lot by lot")
-    st.caption("Actual precursor data may be used only if a verification report covers the year the "
-               "steel was produced. Otherwise the default value applies.")
-    st.dataframe(lot_table(s["lots"]), hide_index=True)
-    request_section(folder, s["lots"])
+    e = evidence(s)
+    year = s["cfg"]["reporting_year"]
+    st.html(ui.head("Step 2 · Trace the steel", "Can this steel use real data?",
+                    "Every lot of steel, followed back to the mill that made it.",
+                    side=ui.readiness(e["share"], e["ready"], e["total"], e["bars"])))
+    groups = drafts.request_groups(s["lots"])
+    for col, (status, (name, icon, meaning)) in zip(st.columns(4, gap="small"), ui.VERDICT.items()):
+        shown = [lot for lot in s["lots"] if lot["status"] == status]
+        count = f"{len(shown)} {'lot' if len(shown) == 1 else 'lots'}"
+        with col, st.container(key=f"col-{name}"):
+            st.html(ui.verdict_head(name, icon, verdict_name(status, s["lots"], year), meaning,
+                                    f"{count} · {ui.num(consumed(shown))} t" if shown else count))
+            if not shown:
+                st.html(ui.empty_card("None in this scenario"))
+            lot_cards(folder, status, shown, groups)
+    st.html(ui.glossary())
 
-    st.subheader("Shipment → production month → heat → supplier → mill")
-    rows = chains(s["fac"], s["lots"])
-    shipments = ["All"] + sorted({r["Shipment"] for r in rows if r["Shipment"]})
-    pick = st.selectbox("Shipment", shipments, index=0)
-    shown = [r for r in rows if pick == "All" or r["Shipment"] == pick]
-    for r in shown:
-        r["Status"] = f"{STATUS_ICON.get(r['Status'], '🔴')} {r['Status']}"
-    st.dataframe(pd.DataFrame(shown), hide_index=True)
-    st.caption("Values shown are from CACHED extraction unless read with AI (LIVE) or corrected by hand (MANUAL).")
-
-
-def request_section(folder: str, lot_list: list) -> None:
-    groups = drafts.request_groups(lot_list)
-    if not groups:
-        return
-    st.subheader("Requests for missing evidence")
-    st.caption("The app never sends email. Edit the draft, then copy it into your own email.")
-    for g in groups:
-        key = f"draft-{folder}-{g['to']}-{'-'.join(g['heats'])}"
-        with st.container(border=True):
-            st.markdown(f"**To {g['to']}** · heats {', '.join(g['heats'])} · needed: {g['need']}")
-            if st.button("Draft request", key=f"btn-{key}"):
-                st.session_state[key], st.session_state[f"{key}-label"] = drafts.draft_request(g)
-            if key in st.session_state:
-                st.caption(st.session_state.get(f"{key}-label", ""))
-                st.text_area("AI draft, review before sending", key=key, height=230)
+    with st.expander("Precursor status, shipment by shipment"):
+        rows = chains(s["fac"], s["lots"])
+        shipments = ["All"] + sorted({r["Shipment"] for r in rows if r["Shipment"]})
+        pick = st.selectbox("Shipment", shipments, index=0)
+        shown = [r for r in rows if pick == "All" or r["Shipment"] == pick]
+        for r in shown:
+            r["Status"] = f"{STATUS_ICON.get(r['Status'], '🔴')} {r['Status']}"
+        st.dataframe(pd.DataFrame(shown), hide_index=True)
+        st.caption("Values shown are from CACHED extraction unless read with AI (LIVE) or corrected by hand (MANUAL).")
+    foot("Next: 3 Check the papers →", "3 Check")
 
 
 def page_checks(folder: str) -> None:

@@ -60,7 +60,7 @@ header[data-testid="stHeader"], [data-testid="stToolbar"], [data-testid="stDecor
 [class*="st-key-nav-done"]:not(:first-child)::before, [class*="st-key-nav-now"]:not(:first-child)::before { background: var(--brand); }
 [class*="st-key-nav-"] button::before {
   content: attr(aria-label); display: inline-grid; place-items: center; box-sizing: border-box; width: 22px; height: 22px; border-radius: 50%;
-  border: 1.5px solid var(--unit); font: 500 11px/1 var(--mono); color: var(--ink-2); order: -1;
+  border: 1.5px solid var(--unit); font: 500 11px/1 var(--mono); color: var(--ink-2); order: -1; flex: none;
 }
 .st-key-nav-todo-0 button::before, .st-key-nav-done-0 button::before, .st-key-nav-now-0 button::before { display: none; }
 .st-key-nav-todo-1 button::before, .st-key-nav-now-1 button::before { content: "1"; }
@@ -167,17 +167,18 @@ button[kind="secondary"] p { font: 600 13px/1 var(--body); color: var(--brand); 
 .footline { font: 400 12px/1.3 var(--body); color: var(--ink-2); }
 
 /* ---- trace ---- */
-.ready-card { padding: 16px 20px; width: 420px; flex: none; }
+.ready-card { padding: 16px 20px; width: 420px; flex: none; box-sizing: border-box; }
 .ready-card .row { display: flex; align-items: baseline; gap: 10px; }
 .ready-card .num { font-size: 46px; }
 .ready-card .row span.txt { font: 400 15px/1.2 var(--body); color: var(--ink-2); }
-.glossary { font: 400 13px/1 var(--body); color: var(--ink-2); padding: 0 0 12px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.glossary { font: 400 13px/1 var(--body); color: var(--ink-2); padding: 20px 0 0; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .tip { position: relative; border-bottom: 1px dotted var(--ink-2); cursor: help; }
 .tip::after {
-  content: attr(data-tip); position: absolute; left: 0; top: calc(100% + 6px); z-index: 20; width: 260px; padding: 10px 12px; border-radius: 10px;
+  content: attr(data-tip); position: absolute; left: 0; bottom: calc(100% + 6px); z-index: 20; width: 260px; padding: 10px 12px; border-radius: 10px;
   background: var(--ink); color: var(--sheet); font: 400 13px/1.35 var(--body); opacity: 0; pointer-events: none; transition: opacity .12s;
 }
 .tip:hover::after { opacity: 1; }
+[data-testid="stHorizontalBlock"] { gap: 20px; }
 [class*="st-key-col-"] { gap: 14px; }
 .vhead { border-radius: 20px; padding: 18px; animation: fadeup .3s ease-out; }
 .vhead.ready { background: var(--ready-tint); } .vhead.action { background: var(--action-tint); }
@@ -193,10 +194,11 @@ button[kind="secondary"] p { font: 600 13px/1 var(--body); color: var(--brand); 
 [class*="st-key-lot-"] { background: var(--sheet); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); padding: 18px; gap: 10px; animation: fadeup .3s ease-out; }
 .lot-top { display: flex; align-items: center; justify-content: space-between; }
 .lot-top .heat { font: 500 24px/1 var(--mono); color: var(--ink); }
+.lot-top .dot { width: 10px; height: 10px; margin-right: 10px; vertical-align: 3px; }
 .lot-top .num { font-size: 26px; letter-spacing: -.01em; }
-.lot-mill { font: 500 14px/1.3 var(--body); margin-top: 12px; }
-.lot-sub { font: 400 13px/1.3 var(--body); color: var(--ink-2); margin-top: 8px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.lot-sub hr, hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
+.lot-mill { font: 500 14px/1.3 var(--body); margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lot-sub { font: 400 13px/1.3 var(--body); color: var(--ink-2); margin-top: 8px; }
+hr.rule { border: 0; border-top: 1px solid var(--line); margin: 12px 0; }
 .lot-next { font: 400 14px/1.4 var(--body); color: var(--ink); margin-top: 8px; }
 .lot .label { font-size: 11px; }
 [class*="st-key-lot-"] button { min-height: 32px; }
