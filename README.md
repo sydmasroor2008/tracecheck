@@ -24,7 +24,7 @@ Double-click `run.bat`, or in a terminal inside this folder:
 run.bat
 ```
 
-The first run creates a virtual environment in `.venv` and installs packages (needs internet once). After that it starts offline. Your browser opens at http://localhost:8501. Pick a demo folder (clean, problem, trader) in the sidebar.
+The first run creates a virtual environment in `.venv` and installs packages (needs internet once). After that it starts offline. Your browser opens at http://localhost:8501. Pick a scenario (Clean factory, Factory with problems, Trader supply chain) in the top bar.
 
 Manual steps if you prefer:
 

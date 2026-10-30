@@ -254,8 +254,10 @@ def page_documents(folder: str) -> None:
             st.rerun()
         for i, f in enumerate(unapproved):
             field_review(folder, f, i)
-        st.html("".join(ui.field_row(f["label"], show(f["value"], f["unit"]), f["mode"], f["confidence"])
-                        for f in fields if f["approved"]))
+        rows = [ui.field_row(f["label"], show(f["value"], f["unit"]), f["mode"], f["confidence"])
+                for f in fields if f["approved"]]
+        if rows:
+            st.html("".join(rows))
         with st.expander("Correct an approved value"):
             keys = [f["key"] for f in fields]
             key = st.selectbox("Field", keys, key=f"fix-{folder}-{doc['file']}")
@@ -479,7 +481,8 @@ def page_calculation(folder: str) -> None:
     out = factory_see(s["fac"], s["lots"], defaults)
     with verdict:
         if out["result"].ok:
-            st.html(ui.result_card(out["result"].value, mode_line(folder),
+            typed = ", MANUAL for defaults entered by user" if any(v is not None for v in defaults.values()) else ""
+            st.html(ui.result_card(out["result"].value, mode_line(folder) + typed,
                                    ui.table(["Step", "Value", "Unit"], [[a, ui.num(b), c] for a, b, c in out["steps"]], mono=(1,))))
         else:
             st.html(ui.missing_card(missing_items(out)))

@@ -72,7 +72,7 @@
 
 **tests/test_export.py** — Opens the Excel file for every folder, checks the header line on every sheet, that every number in the evidence index has a source, and that the problem folder's issues and "input missing" values appear.
 
-**app.py** — The Streamlit app with six pages and a demo-folder selector (clean, problem, trader). Dashboard counts; Documents and review shows each document with its fields, mode and confidence, and lets a reviewer approve or correct values; Trace map shows the lot-by-lot precursor status and the shipment chains; Checks lists flags and lets you accept one with a note; Calculation keeps the Commission proof table and shows the factory's illustrative result or "input missing"; Evidence pack downloads the Excel file. Every page shows the SYNTHETIC banner.
+**app.py** — The Streamlit app with six screens and a Scenario selector (clean, problem, trader). Overview shows how ready the evidence is; 1 Read shows each document with its fields, mode and confidence, and lets a reviewer approve or correct values; 2 Trace shows every lot under its verdict and the shipment chains; 3 Check lists flags and lets you accept one with a note; 4 Calculate shows the Commission proof and the factory's illustrative result or "input missing"; 5 Export downloads the Excel file. Every screen shows the SYNTHETIC pill and the draft line.
 
 **tests/test_app_smoke.py** — Imports app.py with a fake streamlit module and calls every page for every demo folder, so a broken page is caught without starting a browser.
 
@@ -83,3 +83,13 @@
 **tests/test_words.py** — Searches app.py, the tracecheck and tools code, README, run.bat and config.yaml for the banned words (certified, audit-ready, compliant, ISO, guaranteed, official, saves or saving, and money amounts). It fails if any comes back.
 
 **BUILD_REPORT.md** — The team's summary of steps 4 to 12: each screen and a 90-second demo script, the test result, the flags and precursor statuses each folder gives, what was not verified or was cut, and the final 10-point check.
+
+**ui.py** — Small functions that return the HTML for the top bar, cards, big numbers, evidence bar, progress path, lot cards and the document sheet. It only formats values passed in by app.py and never calculates a result. Drawings are data-URI images because st.html removes inline SVG.
+
+**static/style.css** — All the styling: colour tokens, type, cards, screen layouts and the small animations, which are turned off for people who prefer reduced motion. It is read by ui.py and placed in the page on every run. Its selectors follow Streamlit 1.66 markup, so check them after an upgrade.
+
+**static/fonts/** — Montserrat, Inter and JetBrains Mono as woff2 files, plus their open-font licences. They are served by Streamlit's static serving so the app needs no internet. Only the Latin subset is included.
+
+**docs/DESIGN_NOTES.md** — What changed in Step 14, where the app differs from the mockups and why, what was cut, and what did not work in Streamlit.
+
+**docs/screens/** — Screenshots of all six screens in all three scenarios at 1366x768, named scenario-screen.png.
