@@ -172,6 +172,27 @@ def test_day_quota_stops_at_once_and_resume_keeps_finished_documents():
     assert client.count == 2 and all(live.values())                    # only the two missing ones read
 
 
+def test_day_quota_switches_to_the_next_key_with_the_same_model():
+    from tools.measure_extraction import QuotaStop, read_live
+    docs = [d for d in data.load_documents("clean") if d["type"] == "gas_invoice"][:4]
+    first, second = QuotaClient(2, DAY_429), QuotaClient(10, DAY_429)
+    live = read_live("clean", docs, clients=[("GEMINI_API_KEY", first), ("GEMINI_API_KEY_2", second)],
+                     sleep=lambda s: None)
+    assert all(live.values()) and first.count == 3 and second.count == 2
+    assert [live[d["file"]]["key_env"] for d in docs] == ["GEMINI_API_KEY"] * 2 + ["GEMINI_API_KEY_2"] * 2
+    assert {r["model"] for r in live.values()} == {extract.model_name()}
+    with pytest.raises(QuotaStop):                                     # every key used up
+        read_live("clean", docs, clients=[("A", QuotaClient(0, DAY_429)), ("B", QuotaClient(1, DAY_429))],
+                  sleep=lambda s: None)
+
+
+def test_key_names_in_order(monkeypatch):
+    for n in ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"]:
+        monkeypatch.setenv(n, "x")
+    monkeypatch.delenv("GEMINI_API_KEY_4", raising=False)
+    assert extract.key_names()[:3] == ["GEMINI_API_KEY", "GEMINI_API_KEY_2", "GEMINI_API_KEY_3"]
+
+
 def test_minute_quota_stops_after_three_in_a_row():
     from tools.measure_extraction import QuotaStop, read_live
     docs = [d for d in data.load_documents("clean") if d["type"] == "gas_invoice"][:4]
