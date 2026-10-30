@@ -6,3 +6,7 @@ reportlab>=4.2
 pillow>=10.4
 pyyaml>=6.0
 pytest>=8.0
+google-genai>=2.30
+pypdfium2>=4.30
+google-genai>=2.30
+pypdfium2>=4.30

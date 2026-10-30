@@ -9,3 +9,5 @@ output/
 data/*/approvals.json
 data/*/flag_notes.json
 .claude/settings.local.json
+data/*/live_use.json
+data/uploads/

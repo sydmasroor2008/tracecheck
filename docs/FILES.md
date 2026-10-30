@@ -42,7 +42,9 @@
 
 **tests/test_factory.py** — Checks the seed gives identical data, the clean totals (200 t consumed, 170 t made, 595 GJ gas, 160 t shipped), that each planted issue is in problem and not in clean, and that every document exists and says SYNTHETIC.
 
-**tracecheck/extract.py** — One function, `extract(doc, mode)`, for reading a document into fields. CACHED reads saved results from cached_fields.json and works offline. MANUAL wraps values a person typed. LIVE is a placeholder that says "LIVE mode not configured" unless the environment variable TRACECHECK_LIVE_KEY is set, and is not built in this prototype.
+**tracecheck/extract.py** — One function, `extract(doc, mode)`, for reading a document into fields. CACHED reads saved results from cached_fields.json and works offline. MANUAL wraps values a person typed. LIVE sends the document image (a PDF page is rendered to PNG first) to the Gemini API with a short prompt per document type and asks for JSON in the shape of the same pydantic models, with a confidence and `null` for anything not visible. Invalid answers, nulls and low confidence go to review. Every LIVE result is saved to data/<folder>/live_fields.json; without a key or network the app replays that file or falls back to CACHED and never crashes.
+
+**tests/test_live.py** — Tests LIVE mode with a fake Gemini client, so no test needs the network or the key. It checks that valid JSON is stored as LIVE with the model name and time, that invalid JSON sends every field to review, that low confidence and nulls need review, that a missing key falls back to CACHED, and that a saved LIVE result is replayed when the network fails. It also checks that the swapped Mn/Cr certificate is still flagged when its fields come from LIVE mode.
 
 **tools/measure_extraction.py** — Compares extracted fields with the ground truth and prints the share that match, per document type. In CACHED mode it prints 100 percent with the note "CACHED mode, not a real accuracy measure", because the cached values were made from the ground truth.
 

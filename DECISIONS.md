@@ -9,3 +9,5 @@
 - 2026-10-30: Steps 4 to 12 are specified in BUILD_PLAN.md for Claude Code to build autonomously, committing and logging each step in PROGRESS.md.
 - 2026-10-30: The clean folder carries all three precursor verdicts (actual allowed, default for report period, default for no emissions data); this is the main demo screen. The problem folder carries five planted flags.
 - 2026-10-30: LIVE extraction is a stub unless a key is set; CACHED mode is the demo mode.
+- 2026-10-30: Step 13 uses the Gemini API for LIVE extraction. Model: gemini-3.8-flash, the newest stable Flash model (not lite, preview, image or TTS) in the key's model list on 2026-10-30; override with GEMINI_MODEL. PDFs are rendered to PNG before sending, so the model reads pixels, not the PDF text layer.
+- 2026-10-30: LIVE fields replace CACHED fields for a document only after the user presses Read with AI (choice kept in the git-ignored live_use.json). Demo start (saved=False) always uses CACHED. Uploaded documents are read for review only and kept in the git-ignored data/uploads.

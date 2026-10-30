@@ -82,16 +82,40 @@ def load_documents(folder: str) -> list:
     return cache.get("documents", [])
 
 
+def live_docs(folder: str) -> list:
+    """Documents whose fields the user chose to take from a LIVE reading (live_use.json)."""
+    return read_json(folder_path(folder) / "live_use.json", [])
+
+
+def set_live_doc(folder: str, doc: str, on: bool) -> None:
+    docs = [d for d in live_docs(folder) if d != doc] + ([doc] if on else [])
+    write_json(folder_path(folder) / "live_use.json", docs)
+
+
+def clear_approvals(folder: str, keys: list) -> None:
+    path = folder_path(folder) / "approvals.json"
+    approvals = read_json(path, {})
+    write_json(path, {k: v for k, v in approvals.items() if k not in keys})
+
+
 def load_fields(folder: str, saved: bool = True) -> list:
-    """Cached fields with review state. saved=False ignores approvals.json (demo start)."""
-    from tracecheck.extract import extract_folder
+    """Cached fields with review state. saved=False ignores approvals.json and LIVE choices (demo start).
+
+    For documents listed in live_use.json the saved LIVE fields replace the CACHED ones."""
+    from tracecheck.extract import extract_folder, load_live
 
     threshold = load_config()["review_confidence_threshold"]
     approvals = read_json(folder_path(folder) / "approvals.json", {}) if saved else {}
+    cached = extract_folder(folder, "CACHED")
+    if saved:
+        live = load_live(folder)
+        use = [d for d in live_docs(folder) if d in live]
+        cached = [f for f in cached if f["source_file"] not in use]
+        cached += [f for d in use for f in live[d]["fields"]]
     fields = []
-    for f in extract_folder(folder, "CACHED"):
+    for f in cached:
         f = dict(f)
-        f["needs_review"] = f["confidence"] < threshold
+        f["needs_review"] = f["confidence"] < threshold or (f["mode"] == "LIVE" and f["needs_review"])
         f["approved"] = not f["needs_review"]
         f["reviewer"] = AUTO_REVIEWER if f["approved"] else None
         f["reviewed_at"] = None

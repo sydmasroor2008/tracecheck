@@ -4,7 +4,7 @@ import pytest
 
 from tools.measure_extraction import measure
 from tracecheck import data
-from tracecheck.extract import LiveNotConfigured, extract
+from tracecheck.extract import LiveNotConfigured, extract, make_client
 
 
 @pytest.mark.parametrize("folder", data.FOLDERS)
@@ -42,10 +42,10 @@ def test_manual_mode_marks_values():
     assert fields[0]["mode"] == "MANUAL" and fields[0]["value"] == 49.0
 
 
-def test_live_mode_without_key(monkeypatch):
-    monkeypatch.delenv("TRACECHECK_LIVE_KEY", raising=False)
+def test_live_client_without_key(monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
     with pytest.raises(LiveNotConfigured, match="LIVE mode not configured"):
-        extract("GI-01.pdf", "LIVE")
+        make_client()
 
 
 def test_measure_extraction_cached():

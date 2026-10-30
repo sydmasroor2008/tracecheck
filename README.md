@@ -10,6 +10,12 @@ What it does, in five lines:
 4. Runs reconciliation checks and raises plain-English flags that name the source documents.
 5. Calculates an illustrative specific embedded emissions figure, reproduces the Commission's worked example as a self-test, and exports an Excel evidence pack as a draft prepared for verifier review.
 
+**AI reads, code calculates, a person approves.** Gemini reads document images into fields (LIVE mode) and drafts supplier requests. It never calculates, never decides a flag or a precursor status, and never sends anything.
+
+## Reading documents with AI (optional)
+
+Set the environment variable `GEMINI_API_KEY` (never write it in a file). Optionally set `GEMINI_MODEL`; the default is `gemini-3.8-flash`. On the Documents page press **Read with AI** for the selected document, or upload your own photo. Results are saved to `data/<folder>/live_fields.json` so they replay offline. Without a key or internet the app says "LIVE mode not available, using CACHED results" and carries on.
+
 ## Run it (Windows)
 
 Double-click `run.bat`, or in a terminal inside this folder:
@@ -59,4 +65,4 @@ Everything. The factory "Sri Example Fasteners", the mills, the trader and every
 
 ## Limits
 
-TraceCheck does not issue a verification, replace a verifier, submit to the CBAM Registry, calculate the CBAM obligation, show any money figure, or track electricity. LIVE extraction is not built; MANUAL and CACHED modes only.
+TraceCheck does not issue a verification, replace a verifier, submit to the CBAM Registry, calculate the CBAM obligation, show any money figure, or track electricity. LIVE extraction needs a Gemini key and internet; its accuracy on the synthetic documents is in docs/ACCURACY.md.

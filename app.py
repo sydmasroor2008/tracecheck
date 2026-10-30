@@ -4,10 +4,12 @@ Six pages over one synthetic demo folder (clean, problem or trader).
 Works offline in CACHED mode. No login, no internet.
 """
 
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
-from tracecheck import data
+from tracecheck import data, extract
 from tracecheck.calc import mass_ratio, own_direct_per_tonne, specific_embedded_emissions
 from tracecheck.checks import apply_notes, run_all
 from tracecheck.export import build_pack
@@ -15,6 +17,7 @@ from tracecheck.factory_calc import factory_see
 from tracecheck.trace import ACTUAL_ALLOWED, STATUS_TEXT, chains, lots
 
 BANNER = "SYNTHETIC DATA · Draft prepared for verifier review · Illustrative, for evidence preparation"
+DESIGN_LINE = "AI reads, code calculates, a person approves."
 
 PAGES = [
     "Dashboard",
@@ -86,7 +89,8 @@ def page_dashboard(folder: str) -> None:
     s = load(folder)
     st.header("Dashboard")
     st.caption(f"Sri Example Fasteners (fictional) · reporting year {s['cfg']['reporting_year']} · "
-               f"demo folder: {folder} · extraction mode: CACHED")
+               f"demo folder: {folder} · extraction mode: CACHED"
+               + (f", LIVE for {len(data.live_docs(folder))} document(s)" if data.live_docs(folder) else ""))
     approved = sum(f["approved"] for f in s["fields"])
     traced = sum(1 for lot in s["lots"] if lot["mill"])
     cols = st.columns(4)
@@ -119,6 +123,23 @@ def page_documents(folder: str) -> None:
     choice = st.selectbox("Document", labels, index=first)
     doc = docs[labels.index(choice)]
     path = data.folder_path(folder) / "docs" / doc["file"]
+
+    st.caption(f"**{DESIGN_LINE}** Gemini never calculates, never decides a flag or a precursor status, "
+               "and never sends anything.")
+    ai = st.columns(2)
+    if ai[0].button("Read with AI", key=f"ai-{folder}-{doc['file']}"):
+        fields, message = extract.read_with_ai(folder, doc["file"])
+        if fields and fields[0]["mode"] == "LIVE":
+            data.clear_approvals(folder, [f["key"] for f in fields])
+            data.set_live_doc(folder, doc["file"], True)
+        st.session_state["ai_message"] = message
+        st.rerun()
+    if doc["file"] in data.live_docs(folder) and ai[1].button("Use CACHED fields again",
+                                                              key=f"cached-{folder}-{doc['file']}"):
+        data.set_live_doc(folder, doc["file"], False)
+        st.rerun()
+    if st.session_state.get("ai_message"):
+        st.info(st.session_state.pop("ai_message"))
 
     left, right = st.columns(2)
     with left:
@@ -172,6 +193,28 @@ def page_documents(folder: str) -> None:
     if st.button("Reset all reviews in this folder"):
         data.reset_approvals(folder)
         st.rerun()
+    upload_section()
+
+
+def upload_section() -> None:
+    with st.expander("Upload your own document photo and read it with AI"):
+        st.caption("For review only: an uploaded document is not added to this folder's checks. "
+                   "The file is kept in data/uploads on this computer and its image is sent to the "
+                   "Gemini API when you press the button.")
+        kind = st.selectbox("Document type", list(extract.DOC_SPECS), key="upload-kind")
+        upload = st.file_uploader("Photo (JPG or PNG) or PDF", type=["jpg", "jpeg", "png", "pdf"])
+        if upload is not None and st.button("Read the upload with AI"):
+            dest = extract.UPLOADS / Path(upload.name).name
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(upload.getvalue())
+            fields, message = extract.read_with_ai(None, dest.name, kind, path=dest)
+            st.info(message)
+            if fields:
+                st.dataframe(pd.DataFrame([{
+                    "Field": f["label"], "Value": show(f["value"], f["unit"]), "Mode": f["mode"],
+                    "Confidence": f["confidence"],
+                    "Review": "⚠ needs review" if f["needs_review"] else "readable",
+                } for f in fields]), hide_index=True)
 
 
 def page_trace(folder: str) -> None:
@@ -190,7 +233,7 @@ def page_trace(folder: str) -> None:
     for r in shown:
         r["Status"] = f"{STATUS_ICON.get(r['Status'], '🔴')} {r['Status']}"
     st.dataframe(pd.DataFrame(shown), hide_index=True)
-    st.caption("Values shown are from CACHED extraction unless corrected by hand (MANUAL).")
+    st.caption("Values shown are from CACHED extraction unless read with AI (LIVE) or corrected by hand (MANUAL).")
 
 
 def page_checks(folder: str) -> None:
