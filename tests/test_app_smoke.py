@@ -87,6 +87,32 @@ def test_review_state_lives_in_the_session_and_never_in_a_file(app, monkeypatch)
 
 
 
+def test_saved_live_values_show_without_any_api_call(app, monkeypatch):
+    mod, st = app
+    monkeypatch.setattr(mod.extract, "make_client", lambda: pytest.fail("API call on page load"))
+    fields = mod.load("problem")["fields"]
+    assert {f["mode"] for f in fields} == {"LIVE"}
+    assert mod.mode_line("problem") == "LIVE"
+    for page in mod.RENDER.values():
+        page("problem")
+    assert {f["mode"] for f in mod.load("clean")["fields"]} == {"CACHED"}     # no saved reading: fall back
+
+
+def test_use_cached_again_returns_one_document_to_cached(app):
+    mod, _ = app
+    mod.set_live_doc("problem", "MC-A2.pdf", False)
+    modes = {f["mode"] for f in mod.load("problem")["fields"] if f["source_file"] == "MC-A2.pdf"}
+    assert modes == {"CACHED"}
+    assert "LIVE for 36 document(s)" in mod.mode_line("problem")
+
+
+def test_accuracy_line_on_the_read_screen(app):
+    mod, st = app
+    mod.page_documents("problem")
+    shown = " ".join(str(a) for _, args in st.calls for a in args)
+    assert mod.data.accuracy_line() and mod.data.accuracy_line() in shown
+
+
 def test_hidden_reset_clears_the_session_and_the_parameter(app, monkeypatch):
     mod, _ = app
 

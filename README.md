@@ -14,7 +14,7 @@ What it does, in five lines:
 
 ## Reading documents with AI (optional)
 
-Set the environment variable `GEMINI_API_KEY` (never write it in a file). Optionally set `GEMINI_MODEL`; the default is `gemini-3.5-flash`. On the Documents page press **Read with AI** for the selected document, or upload your own photo. Results are saved to `data/<folder>/live_fields.json` so they replay offline. Without a key or internet the app says "LIVE mode not available, using CACHED results" and carries on.
+Set the environment variable `GEMINI_API_KEY` (never write it in a file). Optionally set `GEMINI_MODEL`; the default is `gemini-3.5-flash`. On the Documents page press **Read with AI** for the selected document, or upload your own photo. Results are saved to `data/<folder>/live_fields.json` and shown from then on (mode LIVE), online or offline, with no API call on page load; documents with no saved reading show CACHED. Without a key or internet the app says "LIVE mode not available, using CACHED results" and carries on.
 
 ## Run it (Windows)
 

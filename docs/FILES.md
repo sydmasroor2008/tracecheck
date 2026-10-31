@@ -93,3 +93,7 @@
 **docs/DESIGN_NOTES.md** — What changed in Step 14, where the app differs from the mockups and why, what was cut, and what did not work in Streamlit.
 
 **docs/screens/** — Screenshots of all six screens in all three scenarios at 1366x768, named scenario-screen.png, plus the Trace screen at 1024x768 for the clean and trader scenarios and full-length captures of trader Trace.
+
+**docs/ACCURACY.md** — The report from the live Gemini measurement on the problem folder: accuracy per document type and per field, every misread, and whether the checks still find the planted issues. It is written by tools/measure_extraction.py and never edited by hand.
+
+**data/accuracy.json** — The headline numbers from the same measurement: documents, correct fields, total fields, date and model. The app reads it for the quiet accuracy line on 1 Read, so the percentage on screen always comes from the saved measurement. Regenerate it without API calls with `python tools/measure_extraction.py --folder problem --mode live --replay`.

@@ -53,7 +53,7 @@ def factory_see(fac: dict, lot_list: list, defaults: dict = None) -> dict:
         if lot["consumed_t"] is None:
             missing.append(f"consumed tonnes for heat {lot['heat']}")
         lot_values.append({"heat": lot["heat"], "consumed_t": lot["consumed_t"], "see": value,
-                           "basis": basis, "status": lot["status"]})
+                           "basis": basis, "status": lot["status"], "mode": lot.get("see_mode")})
     if no_default:
         missing.append("default value not entered for " + ", ".join(no_default))
     if not lot_list:

@@ -193,3 +193,26 @@ def test_live_fields_feed_the_checks(monkeypatch):
     assert not [f for f in fields if f["source_file"] == "MC-A2.pdf" and f["mode"] == "CACHED"]
     flags = run_all(data.build_facility(fields, data.load_config()), data.load_config())
     assert "CHEMISTRY_RANGE" in {f["id"] for f in flags}
+
+
+def test_null_for_a_field_not_on_the_document_is_dropped():
+    """Trader invoices carry no emissions claim: a null there must not become a review item."""
+    fake = {"model": "m", "read_at": "t", "fields": [
+        {"key": "purchases[3].emissions_claim", "value": None, "confidence": 0.0, "needs_review": True,
+         "source_file": "GI-01.pdf", "mode": "LIVE"}]}
+    extract.save_live("clean", "GI-01.pdf", fake)
+    assert "purchases[3].emissions_claim" not in {f["key"] for f in data.load_fields("clean", live_use=["GI-01.pdf"])}
+
+
+def test_accuracy_line_comes_from_the_saved_measurement(tmp_path):
+    path = tmp_path / "accuracy.json"
+    assert data.accuracy_line(path) == ""
+    data.write_json(path, {"documents": 3, "correct": 2, "total": 3, "date": "2026-01-02", "model": "m"})
+    assert data.accuracy_line(path) == "Gemini field accuracy on 3 synthetic documents: 66.7% (2026-01-02, m)"
+
+
+def test_summary_counts_the_compared_rows():
+    from tools.measure_extraction import summary
+    live = {"a": {"model": "m"}, "b": None}
+    s = summary("problem", live, [{"correct": True}, {"correct": False}])
+    assert (s["documents"], s["correct"], s["total"], s["model"]) == (1, 1, 2, "m")

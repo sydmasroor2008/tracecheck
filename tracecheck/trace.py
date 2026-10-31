@@ -69,13 +69,15 @@ def lots(fac: dict) -> list:
         cert = certs.get(heat) or {}
         year = _year(cert.get("production_date")) if cert else None
         status, action = precursor_status(mill, year, reports, supplier, via)
-        see = None
+        see = see_mode = None
         if status == ACTUAL_ALLOWED:
-            see = next(r.get("precursor_see") for r in reports if r.get("mill") == mill and r.get("period_year") == year)
+            i, report = next((i, r) for i, r in enumerate(fac["verification_reports"])
+                             if r and r.get("mill") == mill and r.get("period_year") == year)
+            see, see_mode = report.get("precursor_see"), modes.get(f"verification_reports[{i}].precursor_see")
         out.append({"heat": heat, "kind": kind, "supplier": supplier, "mill": mill, "link": link,
                     "production_year": year, "tonnes": tonnes, "consumed_t": consumed,
                     "status": status, "status_text": STATUS_TEXT[status], "next_action": action,
-                    "verified_see": see, "mode": modes.get(f"{key}.tonnes")})
+                    "verified_see": see, "see_mode": see_mode, "mode": modes.get(f"{key}.tonnes")})
     return [lot for lot in out if lot["consumed_t"] is None or lot["consumed_t"] > 0]
 
 

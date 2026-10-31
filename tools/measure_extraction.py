@@ -8,7 +8,8 @@ In CACHED mode the fields were generated from the ground truth, so the score
 is 100 percent by construction. It is not a real accuracy measure.
 LIVE mode reads every document with Gemini, prints accuracy per document type
 and per field, the fields sent to review, and whether the checks still find the
-planted issues. It writes the printed report to docs/ACCURACY.md.
+planted issues. It writes the printed report to docs/ACCURACY.md and the headline
+numbers to data/accuracy.json, which the app reads for its accuracy line.
 """
 
 import argparse
@@ -23,7 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from tracecheck import data, extract  # noqa: E402
 from tracecheck.checks import run_all  # noqa: E402
-from tracecheck.data import folder_path, get_path, read_json  # noqa: E402
+from tracecheck.data import folder_path, get_path, read_json, write_json  # noqa: E402
 from tracecheck.extract import extract_folder  # noqa: E402
 from tracecheck.trace import lots  # noqa: E402
 
@@ -170,23 +171,37 @@ def table(rows: list, group: str) -> list:
     return lines
 
 
-def report(folder: str, docs: list, live: dict, rows: list) -> list:
-    results = [r for r in live.values() if r]
+def model_text(results: list) -> str:
     models = sorted({r["model"] + (f" (served as {r['model_version']})" if r.get("model_version")
                                    and r["model_version"] != r["model"] else "") for r in results}) \
         or [extract.model_name()]
+    return ", ".join(models)
+
+
+def summary(folder: str, live: dict, rows: list) -> dict:
+    """The headline numbers saved for the app."""
+    results = [r for r in live.values() if r]
+    return {"folder": folder, "documents": len(results), "correct": sum(r["correct"] for r in rows),
+            "total": len(rows), "date": datetime.date.today().isoformat(),
+            "model": ", ".join(sorted({r.get("model_version") or r["model"] for r in results}))}
+
+
+def report(folder: str, docs: list, live: dict, rows: list) -> list:
+    results = [r for r in live.values() if r]
     pages = sum(len(extract.page_images(folder_path(folder) / "docs" / d["file"])) for d in docs if live.get(d["file"]))
     correct = sum(r["correct"] for r in rows)
     wrong = [r for r in rows if not r["correct"]]
     caught = [r for r in wrong if r["review"]]
     missed = [r for r in wrong if not r["review"]]
     right_review = sum(r["correct"] and r["review"] for r in rows)
+    known = {r["key"] for r in rows}
+    extra_nulls = sum(f["key"] not in known and f["value"] is None for r in results for f in r["fields"])
     out = [
         "# LIVE extraction accuracy",
         "",
         f"- Date: {datetime.date.today().isoformat()} (documents read "
         f"{min((r['read_at'] for r in results), default='-')[:10]} to {max((r['read_at'] for r in results), default='-')[:10]})",
-        f"- Model: {', '.join(models)}",
+        f"- Model: {model_text(results)}",
         f"- Folder: {folder} (synthetic documents with ground truth)",
         f"- Documents read: {len(results)} of {len(docs)}; pages sent: {pages}; "
         f"schema mismatches: {sum(not r['valid'] for r in results)}",
@@ -202,6 +217,7 @@ def report(folder: str, docs: list, live: dict, rows: list) -> list:
         f"- Misread or missing fields: {len(wrong)}; sent to review: {len(caught)}; "
         f"not sent to review (auto-approved): {len(missed)}",
         f"- Correct fields sent to review anyway: {right_review}",
+        f"- Null answers for fields the document does not carry (not scored, not shown in the app): {extra_nulls}",
         "",
         "## Per document type", "", *table(rows, "kind"), "",
         "## Per field", "", *table(rows, "field"), "",
@@ -277,6 +293,7 @@ def main() -> None:
     text = "\n".join(lines)
     print(text)
     REPORT.write_text(text + "\n", encoding="utf-8")
+    write_json(data.ACCURACY, summary(args.folder, live, compare(args.folder, docs, live)))
     print(f"\nSaved to {REPORT.relative_to(ROOT)}")
 
 

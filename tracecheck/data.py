@@ -17,6 +17,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
+ACCURACY = DATA / "accuracy.json"     # written by tools/measure_extraction.py
 FOLDERS = ["clean", "problem", "trader"]
 AUTO_REVIEWER = "auto-approved (confidence at or above threshold)"
 
@@ -97,8 +98,10 @@ def load_fields(folder: str, approvals: dict = None, live_use: list = ()) -> lis
     if live_use:
         live = load_live(folder)
         use = [d for d in live_use if d in live]
+        known = {f["key"] for f in cached}
         cached = [f for f in cached if f["source_file"] not in use]
-        cached += [f for d in use for f in live[d]["fields"]]
+        # a null for a field the document does not carry is not a value to review
+        cached += [f for d in use for f in live[d]["fields"] if f["value"] is not None or f["key"] in known]
     fields = []
     for f in cached:
         f = dict(f)
@@ -109,6 +112,15 @@ def load_fields(folder: str, approvals: dict = None, live_use: list = ()) -> lis
         f.update(approvals.get(f["key"], {}))
         fields.append(f)
     return fields
+
+
+def accuracy_line(path: Path = None) -> str:
+    """The saved measurement as one sentence, or '' if there is none yet."""
+    m = read_json(path or ACCURACY)
+    if not m or not m["total"]:
+        return ""
+    return (f"Gemini field accuracy on {m['documents']} synthetic documents: "
+            f"{100 * m['correct'] / m['total']:.1f}% ({m['date']}, {m['model']})")
 
 
 def approval_entry(value=None, edited: bool = False, reviewer: str = "reviewer (demo)") -> dict:

@@ -64,9 +64,10 @@ def tonnes(value) -> str:
     return f'{num(value)}<span class="t">&nbsp;t</span>'
 
 
-def head(eyebrow: str, title: str, lede: str = "", side: str = "") -> str:
+def head(eyebrow: str, title: str, lede: str = "", side: str = "", note: str = "") -> str:
     text = (f'<div><div class="eyebrow">{escape(eyebrow)}</div><h1 class="title">{escape(title)}</h1>'
-            + (f'<div class="lede">{escape(lede)}</div>' if lede else "") + "</div>")
+            + (f'<div class="lede">{escape(lede)}</div>' if lede else "")
+            + (f'<div class="headnote">{escape(note)}</div>' if note else "") + "</div>")
     return f'<div class="head{" split" if side else ""}">{text}{side}</div>'
 
 

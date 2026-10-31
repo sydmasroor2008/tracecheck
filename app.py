@@ -1,7 +1,8 @@
 """TraceCheck app. Run with: streamlit run app.py
 
 Six pages over one synthetic demo folder (clean, problem or trader).
-Works offline in CACHED mode. No login, no internet.
+Works offline: shows saved LIVE readings where they exist, CACHED elsewhere.
+No login, and no API call unless a person presses a button.
 """
 
 import base64
@@ -63,7 +64,10 @@ def scroll_up() -> None:
 
 def demo(folder: str) -> dict:
     """This browser session's review state for one scenario. Nothing here reaches a file."""
-    return st.session_state.setdefault("demo", {}).setdefault(folder, {"approvals": {}, "notes": {}, "live": []})
+    states = st.session_state.setdefault("demo", {})
+    if folder not in states:     # saved LIVE readings are shown from the start; no API call here
+        states[folder] = {"approvals": {}, "notes": {}, "live": list(extract.load_live(folder))}
+    return states[folder]
 
 
 def approve(folder: str, key: str, value=None, edited: bool = False) -> None:
@@ -121,6 +125,8 @@ def parse_like(original, text: str):
 
 def mode_line(folder: str) -> str:
     live = len(demo(folder)["live"])
+    if live and live >= len(data.load_documents(folder)):
+        return "LIVE"
     return f"CACHED, LIVE for {live} document(s)" if live else "CACHED"
 
 
@@ -174,7 +180,7 @@ def page_overview(folder: str) -> None:
     st.html(ui.hero(e["share"], e["total"], year, e["bars"], mode_line(folder)))
     st.html(ui.tiles([
         ui.tile("Documents read", len(docs), "", f"{len(pending_docs)} need a human check" if pending_docs
-                else "All checked by a person", "action" if pending_docs else "ready"),
+                else "None waiting for a person", "action" if pending_docs else "ready"),
         ui.tile("Steel traced", len(s["lots"]), "lots", f"to {len(mills)} mills, no gaps" if not untraced
                 else f"{untraced} lots not linked to a mill", "problem" if untraced else "ready"),
         ui.tile("Issues", open_flags, "", f"{open_flags} open" if open_flags else "All checks passed",
@@ -251,7 +257,7 @@ def page_documents(folder: str) -> None:
     modes = " + ".join(sorted({f["mode"] for f in fields})) or "CACHED"
 
     st.html(ui.head("Step 1 · Read the documents", "What did the AI read?", DESIGN_LINE,
-                    side=ui.review_card(len(docs) - len(pending_docs), len(docs))))
+                    side=ui.review_card(len(docs) - len(pending_docs), len(docs)), note=data.accuracy_line()))
     left, right = st.columns([5, 7], gap="medium")
     with left:
         st.html(ui.doc_legend(len(pending_docs)))
@@ -438,7 +444,7 @@ def page_trace(folder: str) -> None:
         for r in shown:
             r["Status"] = f"{STATUS_ICON.get(r['Status'], '🔴')} {r['Status']}"
         st.dataframe(pd.DataFrame(shown), hide_index=True)
-        st.caption("Values shown are from CACHED extraction unless read with AI (LIVE) or corrected by hand (MANUAL).")
+        st.caption("Values are LIVE where a saved AI reading exists, otherwise CACHED; MANUAL where corrected by hand.")
     foot("Next: 3 Check the papers →", "3 Check")
 
 
@@ -543,7 +549,7 @@ def page_calculation(folder: str) -> None:
         v["heat"], ui.num(v["consumed_t"]) if v["consumed_t"] is not None else "—",
         ui.num(v["see"]) if v["see"] is not None else "input missing",
         v["basis"] if v["see"] is not None else "default value not entered yet",
-        "—" if v["see"] is None else ui.chip("MANUAL" if v["basis"].endswith("by user") else "CACHED"),
+        "—" if v["see"] is None else ui.chip("MANUAL" if v["basis"].endswith("by user") else v["mode"]),
     ] for v in out["lot_values"]], mono=(0, 1, 2))))
     st.html(ui.formula_card())
     foot("Next: 5 Export the pack →", "5 Export")
