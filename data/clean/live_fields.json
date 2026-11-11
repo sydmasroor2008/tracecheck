@@ -1,0 +1,114 @@
+{
+  "note": "LIVE results from the Gemini API, saved so they can be replayed offline.",
+  "documents": {
+    "EX-03.jpg": {
+      "model": "gemini-3.5-flash",
+      "model_version": "gemini-3.6-flash",
+      "read_at": "2026-11-05T12:02:49",
+      "valid": true,
+      "kind": "export_invoice",
+      "fields": [
+        {
+          "key": "shipments[2].invoice_no",
+          "doc": "EX-03.jpg",
+          "label": "Invoice no",
+          "value": "EX-03",
+          "unit": null,
+          "source_file": "EX-03.jpg",
+          "page": 1,
+          "mode": "LIVE",
+          "confidence": 0.99,
+          "needs_review": false,
+          "reviewer": null,
+          "reviewed_at": null,
+          "model": "gemini-3.5-flash",
+          "read_at": "2026-11-05T12:02:49"
+        },
+        {
+          "key": "shipments[2].date",
+          "doc": "EX-03.jpg",
+          "label": "Date",
+          "value": "2026-05-21",
+          "unit": null,
+          "source_file": "EX-03.jpg",
+          "page": 1,
+          "mode": "LIVE",
+          "confidence": 0.99,
+          "needs_review": false,
+          "reviewer": null,
+          "reviewed_at": null,
+          "model": "gemini-3.5-flash",
+          "read_at": "2026-11-05T12:02:49"
+        },
+        {
+          "key": "shipments[2].destination",
+          "doc": "EX-03.jpg",
+          "label": "Destination",
+          "value": "IT",
+          "unit": null,
+          "source_file": "EX-03.jpg",
+          "page": 1,
+          "mode": "LIVE",
+          "confidence": 0.99,
+          "needs_review": false,
+          "reviewer": null,
+          "reviewed_at": null,
+          "model": "gemini-3.5-flash",
+          "read_at": "2026-11-05T12:02:49"
+        },
+        {
+          "key": "shipments[2].cn_code",
+          "doc": "EX-03.jpg",
+          "label": "CN code",
+          "value": "73181558",
+          "unit": null,
+          "source_file": "EX-03.jpg",
+          "page": 1,
+          "mode": "LIVE",
+          "confidence": 0.98,
+          "needs_review": false,
+          "reviewer": null,
+          "reviewed_at": null,
+          "model": "gemini-3.5-flash",
+          "read_at": "2026-11-05T12:02:49"
+        },
+        {
+          "key": "shipments[2].tonnes",
+          "doc": "EX-03.jpg",
+          "label": "Net mass",
+          "value": 20.0,
+          "unit": "t",
+          "source_file": "EX-03.jpg",
+          "page": 1,
+          "mode": "LIVE",
+          "confidence": 0.95,
+          "needs_review": false,
+          "reviewer": null,
+          "reviewed_at": null,
+          "model": "gemini-3.5-flash",
+          "read_at": "2026-11-05T12:02:49"
+        },
+        {
+          "key": "shipments[2].production_months",
+          "doc": "EX-03.jpg",
+          "label": "Packed from",
+          "value": [
+            "2026-03",
+            "2026-04",
+            "2026-05"
+          ],
+          "unit": null,
+          "source_file": "EX-03.jpg",
+          "page": 1,
+          "mode": "LIVE",
+          "confidence": 0.99,
+          "needs_review": false,
+          "reviewer": null,
+          "reviewed_at": null,
+          "model": "gemini-3.5-flash",
+          "read_at": "2026-11-05T12:02:49"
+        }
+      ]
+    }
+  }
+}

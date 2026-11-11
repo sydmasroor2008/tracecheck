@@ -11,3 +11,12 @@ data/*/flag_notes.json
 .claude/settings.local.json
 data/*/live_use.json
 data/uploads/
+
+# private strategy docs (kept local only)
+_private_docs/
+docs/TraceCheck_Pitch_Playbook.pdf
+docs/TraceCheck_Team_Guide.pdf
+docs/TraceCheck_Mentor_Briefing.mp4
+docs/TraceCheck_Deep_Guide.pdf
+docs/107_BMC.pdf
+data/*/live_fields.saved-*.json
